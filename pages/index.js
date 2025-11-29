@@ -1,4 +1,3 @@
-// pages/index.js
 import React, { useState } from 'react';
 import { Mail, Database, BarChart3, Send, AlertCircle, GitBranch, Users, FileText, Binary } from 'lucide-react';
 
