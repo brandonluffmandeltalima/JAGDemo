@@ -1,4 +1,3 @@
-/* styles/mvp.css */
 
 .mvp-container {
   animation: fadeIn 0.6s ease-out;
@@ -564,5 +563,385 @@
 
   .draft-label {
     min-width: auto;
+  }
+}
+
+/* ==========================================
+   BATCH PROCESSING STYLES
+   Add these to your existing stylesheet
+   ========================================== */
+
+/* Mode Toggle Styles */
+.mode-toggle-container {
+  margin: 0 auto 2rem;
+  max-width: 900px;
+  padding: 0 1rem;
+}
+
+.mode-toggle-buttons {
+  display: flex;
+  gap: 0.5rem;
+  background: #1e293b;
+  padding: 0.375rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.mode-toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-toggle-btn:hover:not(:disabled) {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+.mode-toggle-btn.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.mode-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Batch Processing Section */
+.batch-processing-section {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.batch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-radius: 1rem;
+  border: 1px solid #334155;
+}
+
+.batch-info {
+  flex: 1;
+}
+
+.batch-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 0.5rem 0;
+}
+
+.batch-description {
+  color: #94a3b8;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.batch-process-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.batch-process-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+}
+
+.batch-process-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.batch-process-button.processing {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+}
+
+/* Batch Emails Preview */
+.batch-emails-preview {
+  background: #1e293b;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #334155;
+}
+
+.preview-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 1rem 0;
+}
+
+.batch-emails-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.batch-email-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #0f172a;
+  border-radius: 0.75rem;
+  border: 2px solid #334155;
+  transition: all 0.3s ease;
+}
+
+.batch-email-item.processing {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.batch-email-item.completed {
+  border-color: #10b981;
+  opacity: 0.7;
+}
+
+.batch-email-number {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #334155;
+  color: #94a3b8;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.batch-email-item.processing .batch-email-number {
+  background: #3b82f6;
+  color: white;
+}
+
+.batch-email-item.completed .batch-email-number {
+  background: #10b981;
+  color: white;
+}
+
+.batch-email-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.batch-email-subject {
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.batch-email-preview {
+  color: #64748b;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.batch-email-status {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #334155;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.check-icon {
+  color: #10b981;
+}
+
+.pending-icon {
+  color: #475569;
+}
+
+/* Batch Results Section */
+.batch-results-section {
+  margin-top: 2rem;
+}
+
+.batch-results-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 1.5rem 0;
+}
+
+.batch-result-card {
+  background: #1e293b;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid #334155;
+  transition: all 0.2s ease;
+}
+
+.batch-result-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+}
+
+.batch-result-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #334155;
+}
+
+.batch-result-number {
+  flex-shrink: 0;
+  padding: 0.375rem 0.75rem;
+  background: #334155;
+  color: #94a3b8;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.batch-result-subject {
+  flex: 1;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+
+.batch-classification-badge {
+  flex-shrink: 0;
+  padding: 0.375rem 0.875rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.batch-classification-badge.relevant {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid #10b981;
+}
+
+.batch-classification-badge.irrelevant {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.batch-result-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.batch-entities,
+.batch-relationships,
+.batch-summary {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.batch-entities strong,
+.batch-relationships strong,
+.batch-summary strong {
+  color: #e2e8f0;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.batch-entities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.batch-entity-tag {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  background: #0f172a;
+  border-left: 3px solid;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+}
+
+.batch-summary p {
+  margin: 0.5rem 0 0 0;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mode-toggle-buttons {
+    flex-direction: column;
+  }
+
+  .batch-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .batch-process-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .batch-result-header {
+    flex-wrap: wrap;
+  }
+
+  .batch-email-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .batch-email-status {
+    align-self: flex-end;
   }
 }
