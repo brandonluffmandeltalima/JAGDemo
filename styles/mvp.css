@@ -916,6 +916,10 @@
   color: #94a3b8;
 }
 
+.batch-processing-section > .api-toggle {
+  margin-bottom: 16px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .mode-toggle-buttons {
