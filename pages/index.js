@@ -12,29 +12,29 @@ export default function JAGEmailProcessor() {
   const [batchResults, setBatchResults] = useState([]);
   const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
 
-  // Pre-populated test emails for batch processing
 const testEmails = [
   {
-    subject: "Personnel Update - Fort Bragg",
-    content: "CPT John Smith stationed at Fort Bragg is scheduled for an Article 15 hearing on March 15, 2024. The case involves alleged misconduct during a training exercise. LTC Davis will preside over the hearing."
+    subject: "Case Update – CPT John Smith (Case #JS-2417)",
+    content: "New information has been added to Case #JS-2417 involving CPT John Smith’s March 2024 training incident. The safety officer submitted a revised statement that may affect the initial findings. Please review before drafting the attorney’s response."
   },
   {
-    subject: "Security Incident Report",
-    content: "MAJ Rebecca Torres at Camp Pendleton reported a security breach on January 8, 2024. The incident involved unauthorized access to classified materials. Investigation is being led by SGT Michael Chen from the Military Police."
+    subject: "Document Requirements – CPT John Smith Hearing (Case #JS-2521)",
+    content: "For Case #JS-2521, all updated counseling statements and the final witness list for CPT John Smith’s administrative hearing must be added to the packet. Submission deadline remains 1700 tomorrow."
   },
   {
-    subject: "Court-Martial Proceedings",
-    content: "SPC Amanda Wilson faces court-martial at Fort Hood scheduled for February 20, 2024. Charges include dereliction of duty and insubordination. COL James Martinez assigned as presiding officer."
+    subject: "Evidence Review Needed – CPT John Smith (Case #JS-2417)",
+    content: "During review of Case #JS-2417, legal identified inconsistencies in the radio traffic logs from the incident day. Please examine these discrepancies and provide attorney notes for follow-up."
   },
   {
-    subject: "Training Schedule Update",
-    content: "Next week's training schedule has been updated. Physical training starts at 0600 hours. No legal matters to report at this time."
+  subject: "Team Potluck – Friday at 1200",
+  content: "Hi CPT John Smith,\n\nJust a reminder that the unit is hosting a team potluck this Friday at 1200 in the break room. Everyone is encouraged to bring a dish to share. Let us know what you plan to bring so we can coordinate. Hope to see you there!\n\n- SFC Ramirez"
   },
   {
-    subject: "Legal Review Required",
-    content: "1LT David Park stationed at Fort Campbell requires legal counsel for an upcoming administrative separation board on April 3, 2024. The case involves performance issues documented over the past six months."
+    subject: "Commander Inquiry – CPT John Smith (Case #JS-2521)",
+    content: "The battalion commander submitted additional questions regarding CPT John Smith’s decision-making during the readiness evaluation under Case #JS-2521. Attorney response is required by Monday."
   }
 ];
+
 
 const handleProcessEmail = async () => {
   setProcessing(true);
@@ -54,7 +54,7 @@ const handleProcessEmail = async () => {
         { from: 'CPT John Smith', relation: 'STATIONED_AT', to: 'Fort Bragg' },
         { from: 'CPT John Smith', relation: 'INVOLVED_IN', to: 'Article 15' }
       ],
-      summary: 'Graph database updated: Added 1 person node, 1 location node, 1 legal code node, 1 date node, and 2 relationships to the knowledge graph.'
+      summary: 'Article 15 hearing shceduled for March 15, 2024.'
     });
     setProcessing(false);
   }, 2000);
@@ -294,7 +294,7 @@ const generateSummary = (entities, relationships) => {
   const entitySummary = parts.length > 0 ? parts.join(', ') : 'no new nodes';
   const relSummary = `${relationships.length} relationship${relationships.length !== 1 ? 's' : ''}`;
 
-  return `Graph database updated: Added ${entitySummary}, and ${relSummary} to the knowledge graph.`;
+  return `Case 2025-0947 involves SPC SGT Marjorie Adams. Recent updates include the completion of new witness interviews and a need to review the evidence to determine whether it is sufficient to support formal charges. Potential defense arguments or mitigating factors should be considered, and a decision is required on whether to proceed with an Article 32 hearing or pursue an administrative resolution. Additionally, guidance is needed on how to brief the command while ensuring compliance with regulations.`;
 };
 
 
@@ -305,7 +305,7 @@ const generateSummary = (entities, relationships) => {
         <Database className="demo-icon" />
         <div>
           <h2 className="demo-title">Pipeline Demo</h2>
-          <p className="demo-subtitle">See how emails flow through the NER → Neo4j pipeline</p>
+          <p className="demo-subtitle">See how emails flow through the NER → Graph DB pipeline</p>
         </div>
       </div>
 
@@ -344,7 +344,7 @@ const generateSummary = (entities, relationships) => {
           <div className="step-icon neo4j-step">
             <Database />
           </div>
-          <h3 className="step-title">Neo4j GraphDB</h3>
+          <h3 className="step-title">GraphDB</h3>
           <p className="step-description">Store nodes and relationships in knowledge graph</p>
         </div>
 
@@ -457,7 +457,7 @@ const generateSummary = (entities, relationships) => {
               <Database />
             </div>
             <div>
-              <h3 className="step-title">Neo4j GraphDB</h3>
+              <h3 className="step-title">GraphDB</h3>
               <p className="step-description">Store nodes and relationships in knowledge graph</p>
             </div>
           </div>
@@ -520,13 +520,25 @@ const generateSummary = (entities, relationships) => {
               </div>
               <div className="email-header-line">
                 <span className="header-label">Subject:</span>
-                <span className="header-value">Graph Database Update - New Entities Detected</span>
+                <span className="header-value">Case Updates for CPT John Smith</span>
               </div>
               <div className="email-divider"></div>
-              <div className="email-body-summary">
-                <p className="summary-paragraph animate-paragraph">New case initiated: CPT John Smith stationed at Fort Bragg is involved in an Article 15 proceeding.</p>
-                <p className="summary-paragraph animate-paragraph delay-p1">Database changes: Added 1 person node, 1 location node, 1 case node, and 3 new relationships.</p>
-              </div>
+                <div className="email-body-summary">
+                  <p className="summary-paragraph animate-paragraph">Hello CPT John Smith,</p>
+                  
+                  <p className="summary-paragraph animate-paragraph delay-p1">
+                    Here’s your weekly summary of the cases you are currently working on and their latest updates.
+                  </p>
+
+                  <p className="summary-paragraph animate-paragraph delay-p1"><strong>Case Updates:</strong></p>
+                  <ul className="summary-list animate-paragraph delay-p1">
+                    <li><strong>Article 15 Proceeding – Fort Bragg:</strong> Case initiated; documents submitted for review.</li>
+                    <li><strong>Training Compliance Review:</strong> Pending review of submitted training logs; follow-up scheduled next week.</li>
+                    <li><strong>Equipment Audit – Fort Bragg:</strong> Audit completed; discrepancies reported and logged.</li>
+                    <li><strong>Special Project X:</strong> Coordination with external agencies completed; awaiting feedback.</li>
+                  </ul>
+                </div>
+
             </div>
             <div className="animation-label">Email Summary</div>
           </div>
@@ -941,7 +953,7 @@ const renderMVP = () => {
             </div>
           )}
 
-          {results.entities && results.entities.length > 0 && (
+          {/* {results.entities && results.entities.length > 0 &&  (
             <div className="results-card graph-card">
               <h3 className="results-title">
                 <Database size={20} />
@@ -981,7 +993,7 @@ const renderMVP = () => {
                 </svg>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       )}
     </div>
@@ -995,7 +1007,7 @@ const renderMVP = () => {
         <BarChart3 className="admin-icon" />
         <div>
           <h2 className="admin-title">Admin Dashboard</h2>
-          <p className="admin-subtitle">Neo4j Graph Database Overview</p>
+          <p className="admin-subtitle">Graph Database Overview</p>
         </div>
       </div>
 
@@ -1040,7 +1052,7 @@ const renderMVP = () => {
       <div className="graph-visualization">
         <h3 className="graph-title">
           <Database size={24} />
-          Neo4j Knowledge Graph - Sample Data
+          Knowledge Graph - Sample Data
         </h3>
         <div className="graph-canvas">
           <svg className="graph-svg" viewBox="0 0 1000 600">
