@@ -945,7 +945,7 @@ const renderMVP = () => {
             <div className="results-card graph-card">
               <h3 className="results-title">
                 <Database size={20} />
-                Neo4j Graph Database View
+                Graph Database View
               </h3>
               <div className="neo4j-graph-container">
                 <svg className="neo4j-graph-svg" viewBox="0 0 600 400">
