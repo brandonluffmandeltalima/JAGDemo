@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Database, BarChart3, Send, AlertCircle, GitBranch, Users, FileText, Binary, Layers, Clock, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
 
 export default function JAGEmailProcessor() {
   const [activeView, setActiveView] = useState('demo');
@@ -1262,7 +1263,7 @@ const renderMVP = () => {
                 <div className="radio-description">Pipeline Overview</div>
               </div>
             </label>
-
+            <Link href='/mvp'>
             <label className={`radio-card ${activeView === 'mvp' ? 'active' : ''}`}>
               <input
                 type="radio"
@@ -1277,6 +1278,7 @@ const renderMVP = () => {
                 <div className="radio-description">Process Emails</div>
               </div>
             </label>
+            </Link>
 
             <label className={`radio-card ${activeView === 'admin' ? 'active' : ''}`}>
               <input
