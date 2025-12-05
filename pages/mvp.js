@@ -100,6 +100,7 @@ const handleProcessEmail = async () => {
           </div>
         </div>
       </nav>
+      <main className='main-content'>
     <div className="mvp-container">
       <div className="mvp-header">
         <Send className="mvp-icon" />
@@ -529,6 +530,8 @@ const handleProcessEmail = async () => {
         </div>
       )}
     </div>
+    </main>
       </div>
+      
   );
 }

@@ -69,6 +69,7 @@ export default function AdminPage() {
           </div>
         </div>
       </nav>
+      <main className='main-content'>
  <div className="admin-container">
       <div className="admin-header">
         <BarChart3 className="admin-icon" />
@@ -298,6 +299,7 @@ export default function AdminPage() {
         </div>
       </div>
     </div>
+    </main>
     </div>
   );
 }
