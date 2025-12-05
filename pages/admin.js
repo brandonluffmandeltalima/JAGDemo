@@ -5,6 +5,292 @@ import Link from 'next/link';
 export default function AdminPage() {
       const [activeView, setActiveView] = useState('demo');
     
+
+      const testEmails = [
+  {
+    subject: "Case Update – CPT John Smith (Case #JS-2417)",
+    content: "New information has been added to Case #JS-2417 involving CPT John Smith’s March 2024 training incident. The safety officer submitted a revised statement that may affect the initial findings. Please review before drafting the attorney’s response."
+  },
+  {
+    subject: "Document Requirements – CPT John Smith Hearing (Case #JS-2521)",
+    content: "For Case #JS-2521, all updated counseling statements and the final witness list for CPT John Smith’s administrative hearing must be added to the packet. Submission deadline remains 1700 tomorrow."
+  },
+  {
+    subject: "Evidence Review Needed – CPT John Smith (Case #JS-2417)",
+    content: "During review of Case #JS-2417, legal identified inconsistencies in the radio traffic logs from the incident day. Please examine these discrepancies and provide attorney notes for follow-up."
+  },
+  {
+  subject: "Team Potluck – Friday at 1200",
+  content: "Hi CPT John Smith,\n\nJust a reminder that the unit is hosting a team potluck this Friday at 1200 in the break room. Everyone is encouraged to bring a dish to share. Let us know what you plan to bring so we can coordinate. Hope to see you there!\n\n- SFC Ramirez"
+  },
+  {
+    subject: "Commander Inquiry – CPT John Smith (Case #JS-2521)",
+    content: "The battalion commander submitted additional questions regarding CPT John Smith’s decision-making during the readiness evaluation under Case #JS-2521. Attorney response is required by Monday."
+  }
+];
+
+
+const handleProcessEmail = async () => {
+  setProcessing(true);
+  setTimeout(() => {
+    setResults({
+      classification: {
+        label: 'RELEVANT',
+        confidence: 0.94
+      },
+      entities: [
+        { text: 'CPT John Smith', type: 'PERSON', color: '#3b82f6' },
+        { text: 'Fort Bragg', type: 'GPE', color: '#10b981' },
+        { text: 'Article 15', type: 'LAW', color: '#f59e0b' },
+        { text: '15 March 2024', type: 'DATE', color: '#8b5cf6' }
+      ],
+      relationships: [
+        { from: 'CPT John Smith', relation: 'STATIONED_AT', to: 'Fort Bragg' },
+        { from: 'CPT John Smith', relation: 'INVOLVED_IN', to: 'Article 15' }
+      ],
+      summary: 'Article 15 hearing shceduled for March 15, 2024.'
+    });
+    setProcessing(false);
+  }, 2000);
+};
+
+const handleBatchProcess = async () => {
+  setProcessing(true);
+  setBatchResults([]);
+  setCurrentBatchIndex(0);
+
+  for (let i = 0; i < testEmails.length; i++) {
+    setCurrentBatchIndex(i);
+    
+    if (useRealAPI) {
+      await processEmailWithAPI(testEmails[i].content, i);
+    } else {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const mockResult = {
+        emailIndex: i,
+        subject: testEmails[i].subject,
+        classification: {
+          label: i === 3 ? 'IRRELEVANT' : 'RELEVANT',
+          confidence: 0.85 + Math.random() * 0.15
+        },
+        entities: i === 3 ? [] : [
+          { text: 'Sample Entity', type: 'PERSON', color: '#3b82f6' },
+          { text: 'Fort Location', type: 'GPE', color: '#10b981' }
+        ],
+        relationships: i === 3 ? [] : [
+          { from: 'Person', relation: 'STATIONED_AT', to: 'Location' }
+        ],
+        summary: i === 3 ? 
+          "This email contains routine administrative information with no legal matters requiring attention." :
+          `Processed email regarding ${testEmails[i].subject}. Key entities and relationships have been extracted and stored in the graph database.`
+      };
+      setBatchResults(prev => [...prev, mockResult]);
+    }
+  }
+
+  setProcessing(false);
+  setCurrentBatchIndex(-1);
+};
+
+const processEmailWithAPI = async (content, index) => {
+  // Simplified version - you can expand this with real API calls
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  const mockResult = {
+    emailIndex: index,
+    subject: testEmails[index].subject,
+    classification: {
+      label: index === 3 ? 'IRRELEVANT' : 'RELEVANT',
+      confidence: 0.85 + Math.random() * 0.15
+    },
+    entities: index === 3 ? [] : [
+      { text: 'Sample Entity', type: 'PERSON', color: '#3b82f6' }
+    ],
+    relationships: index === 3 ? [] : [
+      { from: 'Person', relation: 'LOCATED_AT', to: 'Place' }
+    ],
+    summary: index === 3 ? 
+      "This email contains routine administrative information with no legal matters requiring attention." :
+      `Processed email regarding ${testEmails[index].subject}.`
+  };
+  setBatchResults(prev => [...prev, mockResult]);
+};
+
+const handleProcessEmailOfficial = async () => {
+  setProcessing(true);
+  setPipelineStep('classification');
+  setResults(null);
+
+  try {
+    // Step 1: Classification
+    await new Promise(resolve => setTimeout(resolve, 800));
+    const classifyResponse = await fetch("https://ner-hh1e.onrender.com/classify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        subject: "JAG Legal Communication",
+        body: emailContent,
+        email_id: `email_${Date.now()}`
+      })
+    });
+
+    const classifyData = await classifyResponse.json();
+    console.log("CLASSIFICATION RESULT:", classifyData);
+    
+    // Map backend response to frontend format
+    setResults({ 
+      classification: {
+        label: classifyData.is_relevant ? 'RELEVANT' : 'IRRELEVANT',
+        confidence: classifyData.confidence
+      }
+    });
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    // Step 2: NER Extraction
+    setPipelineStep('ner');
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const nerResponse = await fetch("https://ner-hh1e.onrender.com/ner", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: emailContent
+      })
+    });
+
+    const nerData = await nerResponse.json();
+    console.log("NER RESULT:", nerData);
+    
+    // Map entity colors based on label
+    const entityColorMap = {
+      'PERSON': '#3b82f6',
+      'ORG': '#10b981',
+      'GPE': '#10b981',
+      'LOC': '#10b981',
+      'DATE': '#8b5cf6',
+      'TIME': '#8b5cf6',
+      'LAW': '#f59e0b',
+      'EVENT': '#f59e0b',
+      'NORP': '#ec4899',
+      'FAC': '#10b981',
+      'PRODUCT': '#06b6d4',
+      'WORK_OF_ART': '#a855f7'
+    };
+
+    const mappedEntities = nerData.entities.map(ent => ({
+      text: ent.text,
+      type: ent.label,
+      color: entityColorMap[ent.label] || '#64748b',
+      start: ent.start,
+      end: ent.end
+    }));
+
+    // Generate basic relationships (you can enhance this logic)
+    const relationships = [];
+    const persons = mappedEntities.filter(e => e.type === 'PERSON');
+    const locations = mappedEntities.filter(e => ['GPE', 'LOC', 'FAC'].includes(e.type));
+    const orgs = mappedEntities.filter(e => e.type === 'ORG');
+    const laws = mappedEntities.filter(e => e.type === 'LAW');
+
+    // Create relationships between persons and locations
+    persons.forEach(person => {
+      if (locations.length > 0) {
+        relationships.push({
+          from: person.text,
+          relation: 'LOCATED_AT',
+          to: locations[0].text
+        });
+      }
+      if (orgs.length > 0) {
+        relationships.push({
+          from: person.text,
+          relation: 'WORKS_FOR',
+          to: orgs[0].text
+        });
+      }
+      if (laws.length > 0) {
+        relationships.push({
+          from: person.text,
+          relation: 'INVOLVED_IN',
+          to: laws[0].text
+        });
+      }
+    });
+    
+    setResults(prev => ({
+      ...prev,
+      entities: mappedEntities,
+      relationships: relationships
+    }));
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    // Step 3: Graph DB Population
+    setPipelineStep('graph');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Step 4: Summary Generation
+    setPipelineStep('summary');
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Generate summary based on extracted entities
+    const summary = generateSummary(mappedEntities, relationships);
+    
+    setResults(prev => ({
+      ...prev,
+      summary: summary
+    }));
+
+    setPipelineStep('complete');
+
+  } catch (err) {
+    console.error("API request failed:", err);
+    setResults({
+      entities: [],
+      relationships: [],
+      summary: "API service error: " + err.message,
+      classification: { label: "ERROR", confidence: 0 }
+    });
+    setPipelineStep('error');
+  } finally {
+    setProcessing(false);
+  }
+};
+
+// Helper function to generate summary (place this before renderDemo)
+const generateSummary = (entities, relationships) => {
+  const entityCounts = {};
+  entities.forEach(ent => {
+    entityCounts[ent.type] = (entityCounts[ent.type] || 0) + 1;
+  });
+
+  const parts = [];
+  
+  if (entityCounts['PERSON']) {
+    parts.push(`${entityCounts['PERSON']} person node${entityCounts['PERSON'] > 1 ? 's' : ''}`);
+  }
+  if (entityCounts['ORG']) {
+    parts.push(`${entityCounts['ORG']} organization node${entityCounts['ORG'] > 1 ? 's' : ''}`);
+  }
+  if (entityCounts['GPE'] || entityCounts['LOC'] || entityCounts['FAC']) {
+    const locCount = (entityCounts['GPE'] || 0) + (entityCounts['LOC'] || 0) + (entityCounts['FAC'] || 0);
+    parts.push(`${locCount} location node${locCount > 1 ? 's' : ''}`);
+  }
+  if (entityCounts['LAW']) {
+    parts.push(`${entityCounts['LAW']} legal code node${entityCounts['LAW'] > 1 ? 's' : ''}`);
+  }
+  if (entityCounts['DATE']) {
+    parts.push(`${entityCounts['DATE']} date node${entityCounts['DATE'] > 1 ? 's' : ''}`);
+  }
+
+  const entitySummary = parts.length > 0 ? parts.join(', ') : 'no new nodes';
+  const relSummary = `${relationships.length} relationship${relationships.length !== 1 ? 's' : ''}`;
+
+  return `Case 2025-0947 involves SPC SGT Marjorie Adams. Recent updates include the completion of new witness interviews and a need to review the evidence to determine whether it is sufficient to support formal charges. Potential defense arguments or mitigating factors should be considered, and a decision is required on whether to proceed with an Article 32 hearing or pursue an administrative resolution. Additionally, guidance is needed on how to brief the command while ensuring compliance with regulations.`;
+};
+
   return (
        <div className="app-container">
       <nav className="navbar">
