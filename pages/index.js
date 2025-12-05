@@ -1247,8 +1247,8 @@ const renderMVP = () => {
               <p className="brand-subtitle">Graph Database Email Processing System</p>
             </div>
           </div>
-          
           <div className="radio-navigation">
+            <Link href='/'>
             <label className={`radio-card ${activeView === 'demo' ? 'active' : ''}`}>
               <input
                 type="radio"
@@ -1263,6 +1263,7 @@ const renderMVP = () => {
                 <div className="radio-description">Pipeline Overview</div>
               </div>
             </label>
+            </Link>
             <Link href='/mvp'>
             <label className={`radio-card ${activeView === 'mvp' ? 'active' : ''}`}>
               <input
@@ -1279,7 +1280,7 @@ const renderMVP = () => {
               </div>
             </label>
             </Link>
-
+            <Link href='/admin'>
             <label className={`radio-card ${activeView === 'admin' ? 'active' : ''}`}>
               <input
                 type="radio"
@@ -1294,6 +1295,7 @@ const renderMVP = () => {
                 <div className="radio-description">Database Overview</div>
               </div>
             </label>
+            </Link>
           </div>
         </div>
       </nav>

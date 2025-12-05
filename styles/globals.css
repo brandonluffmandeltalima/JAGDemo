@@ -5,6 +5,14 @@
   box-sizing: border-box;
 }
 
+a {
+  all: unset;           /* Resets almost everything */
+  display: inline;      /* Make sure it behaves like normal text link */
+  cursor: pointer;      /* Optional: show pointer on hover */
+  text-decoration: none; /* Remove underline */
+  color: inherit;        /* Inherit text color from parent */
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
