@@ -3,7 +3,7 @@ import { Mail, Database, BarChart3, Send, AlertCircle, GitBranch, Users, FileTex
 import Link from 'next/link';
 
 export default function AdminPage() {
-      const [activeView, setActiveView] = useState('demo');
+      const [activeView, setActiveView] = useState('admin');
     
 
       const testEmails = [
@@ -306,6 +306,7 @@ const generateSummary = (entities, relationships) => {
           </div>
           
           <div className="radio-navigation">
+          <Link href='/'>
             <label className={`radio-card ${activeView === 'demo' ? 'active' : ''}`}>
               <input
                 type="radio"
@@ -320,6 +321,7 @@ const generateSummary = (entities, relationships) => {
                 <div className="radio-description">Pipeline Overview</div>
               </div>
             </label>
+            </Link>
             <Link href='/mvp'>
             <label className={`radio-card ${activeView === 'mvp' ? 'active' : ''}`}>
               <input
