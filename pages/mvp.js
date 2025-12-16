@@ -9,11 +9,11 @@ export default function MVPPage() {
   const [processing, setProcessing] = useState(false);
   const [emailContent, setEmailContent] = useState('');
   const [useRealAPI, setUseRealAPI] = useState(false);
-    const [results, setResults] = useState(null);
-    const [batchResults, setBatchResults] = useState([]);
-    const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
-    const [pipelineStep, setPipelineStep] = useState(null);
-  
+  const [results, setResults] = useState(null);
+  const [batchResults, setBatchResults] = useState([]);
+  const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
+  const [pipelineStep, setPipelineStep] = useState(null);
+
 const testEmails = [
   {
     subject: "Case Update – CPT John Smith (Case #JS-2417)",
