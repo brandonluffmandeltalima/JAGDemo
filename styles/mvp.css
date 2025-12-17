@@ -1,6 +1,7 @@
 
 .mvp-container {
   animation: fadeIn 0.6s ease-out;
+  padding-bottom: 200px;
 }
 
 .mvp-header {
@@ -45,6 +46,13 @@
   border-radius: 20px;
   border: 1px solid rgba(71, 85, 105, 0.5);
 }
+
+.email-body-text {
+  white-space: pre-wrap;   /* preserves \n and spacing */
+  font-family: inherit;   /* or monospace if preferred */
+  margin-top: 0.5rem;
+}
+
 
 .input-label {
   display: block;
@@ -919,6 +927,160 @@
 .batch-processing-section > .api-toggle {
   margin-bottom: 16px;
 }
+
+
+
+
+
+
+
+.batch-summary-outlook-container {
+  margin-top: 2rem;
+}
+
+.outlook-summary-card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid #334155;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.outlook-summary-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+}
+
+.outlook-summary-header {
+  padding: 1.25rem 1.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  border-bottom: 1px solid #334155;
+}
+
+.outlook-from-line,
+.outlook-to-line,
+.outlook-subject-line,
+.outlook-time-line {
+  display: flex;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.outlook-time-line {
+  margin-bottom: 0;
+  font-size: 0.85rem;
+}
+
+.outlook-label {
+  font-weight: 600;
+  color: #94a3b8;
+  min-width: 90px;
+}
+
+.outlook-value {
+  color: #e2e8f0;
+}
+
+.outlook-subject-line .outlook-value {
+  font-weight: 600;
+  color: #60a5fa;
+}
+
+.outlook-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #334155, transparent);
+}
+
+.outlook-summary-body {
+  padding: 1.5rem;
+  color: #cbd5e1;
+  line-height: 1.8;
+  font-size: 0.95rem;
+  font-family: 'Calibri', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height: 120px;
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.summary-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.summary-loading-text {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.summary-progress-bar {
+  width: 100%;
+  max-width: 400px;
+  height: 8px;
+  background: rgba(51, 65, 85, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  border: 1px solid #334155;
+}
+
+.summary-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #2563eb, #1d4ed8);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.summary-progress-percent {
+  color: #60a5fa;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.typing-cursor {
+  display: inline-block;
+  margin-left: 2px;
+  animation: blink 1s infinite;
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Responsive Design */
 @media (max-width: 768px) {

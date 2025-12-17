@@ -13,29 +13,173 @@ export default function MVPPage() {
   const [batchResults, setBatchResults] = useState([]);
   const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
   const [pipelineStep, setPipelineStep] = useState(null);
+  const [showBatchSummary, setShowBatchSummary] = useState(false);
+const [typedSummary, setTypedSummary] = useState('');
+const [summaryLoading, setSummaryLoading] = useState(false);
+const [summaryProgress, setSummaryProgress] = useState(0);
 
 const testEmails = [
   {
-    subject: "Case Update – CPT John Smith (Case #JS-2417)",
-    content: "New information has been added to Case #JS-2417 involving CPT John Smith’s March 2024 training incident. The safety officer submitted a revised statement that may affect the initial findings. Please review before drafting the attorney’s response."
+    subject: "Case 1 – Thompson v. United States: Initial Discovery Review and Liability Assessment",
+    content: `
+Good afternoon CPT Smith,
+
+I wanted to provide an update on Thompson v. United States.
+
+Key observations:
+- The plaintiff continues to assert negligence by the government driver.
+- Vehicle inspection logs show no mechanical deficiencies.
+- Accident reconstruction suggests possible contributory negligence.
+
+Please review and advise on settlement posture.
+
+Respectfully,
+MAJ Allen
+`
   },
+
   {
-    subject: "Document Requirements – CPT John Smith Hearing (Case #JS-2521)",
-    content: "For Case #JS-2521, all updated counseling statements and the final witness list for CPT John Smith’s administrative hearing must be added to the packet. Submission deadline remains 1700 tomorrow."
+    subject: "Case 1 – Thompson v. United States: Witness Statements and Damages",
+    content: `
+Sir,
+
+Recent witness statements indicate:
+- Two civilian witnesses observed excessive speed by the plaintiff.
+- No witnesses corroborate the claim that the GOV ran a stop sign.
+
+Damages appear overstated due to documented pre-existing conditions.
+
+v/r,
+CPT Nguyen
+`
   },
+
   {
-    subject: "Evidence Review Needed – CPT John Smith (Case #JS-2417)",
-    content: "During review of Case #JS-2417, legal identified inconsistencies in the radio traffic logs from the incident day. Please examine these discrepancies and provide attorney notes for follow-up."
+    subject: "Case 2 – Alvarez v. United States: Command Investigation Findings",
+    content: `
+CPT Smith,
+
+The Command Investigation found:
+- Prior notice of erosion hazards at Range 14
+- Maintenance delays due to funding constraints
+- Contractor was authorized and within scope of duties
+
+These findings may impact liability analysis.
+
+LTC Harris
+`
   },
+
   {
-  subject: "Team Potluck – Friday at 1200",
-  content: "Hi CPT John Smith,\n\nJust a reminder that the unit is hosting a team potluck this Friday at 1200 in the break room. Everyone is encouraged to bring a dish to share. Let us know what you plan to bring so we can coordinate. Hope to see you there!\n\n- SFC Ramirez"
+    subject: "Team Potluck – Friday at 1200",
+    content: `
+Hi CPT John Smith,
+
+Just a reminder that the unit is hosting a team potluck this Friday at 1200.
+
+Details:
+- Location: Break room
+- Theme: Comfort foods
+- Please reply with what you plan to bring
+
+Hope to see you there!
+
+- SFC Ramirez
+`
   },
+
   {
-    subject: "Commander Inquiry – CPT John Smith (Case #JS-2521)",
-    content: "The battalion commander submitted additional questions regarding CPT John Smith’s decision-making during the readiness evaluation under Case #JS-2521. Attorney response is required by Monday."
+    subject: "Case 2 – Alvarez v. United States: Settlement Considerations",
+    content: `
+CPT Smith,
+
+Based on preliminary exposure analysis:
+- Liability risk assessed as moderate to high
+- Damages appear limited
+- Early settlement may be fiscally prudent
+
+Recommend coordinating with USARCS.
+
+MAJ Allen
+`
   }
 ];
+
+const startTypingEffect = async () => {
+  // Start loading phase
+  setSummaryLoading(true);
+  setSummaryProgress(0);
+  
+  // Simulate loading progress
+  const loadingDuration = 2000; // 2 seconds
+  const progressInterval = setInterval(() => {
+    setSummaryProgress(prev => {
+      if (prev >= 100) {
+        clearInterval(progressInterval);
+        return 100;
+      }
+      return prev + 2;
+    });
+  }, loadingDuration / 50);
+  
+  // Wait for loading to complete
+  await new Promise(resolve => setTimeout(resolve, loadingDuration));
+  setSummaryLoading(false);
+  
+  // Start typing effect
+//     Weekly Summary Email – For CPT John Smith
+
+// From: Litigation Division – Case Management
+// To: CPT John Smith, JAGC
+// Subject: Weekly Case Update – Thompson & Alvarez Matters
+  const fullSummary = `
+
+Good afternoon CPT Smith,
+
+Below is your weekly litigation update summarizing activity from the past week:\n\n
+
+Case 1: Thompson v. United States (FTCA – GOV Accident)
+
+Recent Updates:
+
+Discovery review suggests defensible liability posture, including evidence of possible plaintiff contributory negligence.
+
+GOV maintenance records and MP reports support SPC Reyes’ compliance with duty standards.
+
+Civilian witness statements undermine plaintiff’s account of the collision.
+
+Plaintiff informally signaling a high settlement demand, though damages appear inflated due to pre-existing conditions and employment gaps.
+
+Next steps may include pushing back on settlement posture and considering a Rule 35 IME once medical records are complete.
+
+Case 2: Alvarez v. United States (Premises Liability – Training Range Injury)
+
+Recent Updates:
+
+Command Investigation confirms prior notice of hazardous range conditions and delayed maintenance.
+
+Liability risk assessed as moderate to high based on CI findings.
+
+Damages likely limited due to recovery and return to work.
+
+Early settlement discussions recommended in the low-to-mid five-figure range, pending DPW document review.
+
+Coordination with DPW and USARCS advised to assess settlement authority.
+`;
+  
+
+  let index = 0;
+  setTypedSummary('');
+  
+  const typingInterval = setInterval(() => {
+    if (index < fullSummary.length) {
+      setTypedSummary(fullSummary.substring(0, index + 1));
+      index++;
+    } else {
+      clearInterval(typingInterval);
+    }
+  }, 20);
+};
 
 
 const handleProcessEmail = async () => {
@@ -77,6 +221,9 @@ const handleBatchProcess = async () => {
       const mockResult = {
         emailIndex: i,
         subject: testEmails[i].subject,
+        body: testEmails[i].content,        // ✅ include the body
+        fullText: `Subject: ${testEmails[i].subject}\n\nBody:\n${testEmails[i].content}`,
+        subject: testEmails[i].subject,
         classification: {
           label: i === 3 ? 'IRRELEVANT' : 'RELEVANT',
           confidence: 0.85 + Math.random() * 0.15
@@ -96,8 +243,14 @@ const handleBatchProcess = async () => {
     }
   }
 
+  console.log("BATCH RESULTS:", batchResults)
+
   setProcessing(false);
-  setCurrentBatchIndex(-1);
+setCurrentBatchIndex(-1);
+
+// Start typing effect after batch completes
+setShowBatchSummary(true);
+startTypingEffect();
 };
 
 const processEmailWithAPI = async (content, index) => {
@@ -391,15 +544,19 @@ const generateSummary = (entities, relationships) => {
             <Mail size={18} />
             Single Email
           </button>
-          <button
-            className={`mode-toggle-btn ${processingMode === 'batch' ? 'active' : ''}`}
-            onClick={() => {
-              setProcessingMode('batch');
-              setResults(null);
-              setBatchResults([]);
-            }}
-            disabled={processing}
-          >
+         <button
+              className={`mode-toggle-btn ${processingMode === 'batch' ? 'active' : ''}`}
+              onClick={() => {
+                      setProcessingMode('batch');
+                      setResults(null);
+                      setBatchResults([]);
+                      setShowBatchSummary(false);
+                      setTypedSummary('');
+                      setSummaryLoading(false);
+                      setSummaryProgress(0);
+              }}
+              disabled={processing}
+            >
             <Layers size={18} />
             Batch Processing
           </button>
@@ -595,18 +752,81 @@ const generateSummary = (entities, relationships) => {
                         </div>
                       )}
 
-                      {result.summary && (
-                        <div className="batch-summary">
-                          <strong>Summary:</strong>
-                          <p>{result.summary}</p>
+                      
+                      {/* {result.fullText && result.fullText.length > 0 && (
+                        <div className="batch-relationships">
+                          <strong>Email Text:</strong> {result.fullText}
+                        </div>
+                      )} */}
+{/* 
+                      {result.body && result.body.length > 0 && (
+                        <div className="batch-relationships">
+                          <strong>Email Text:</strong> {result.body}
+                        </div>
+                      )} */}
+
+                     {result.body && result.body.length > 0 && (
+                        <div className="batch-relationships">
+                          <strong>Email Text:</strong>
+                          <div className="email-body-text">
+                            {result.body}
+                          </div>
                         </div>
                       )}
+
                     </div>
                   </div>
                 ))}
               </div>
             )}
+              {showBatchSummary && (
+                <div className="batch-summary-outlook-container">
+                  <div className="outlook-summary-card">
+                    <div className="outlook-summary-header">
+                      <div className="outlook-from-line">
+                        <span className="outlook-label">From:</span>
+                        <span className="outlook-value">JAG Intelligence System &lt;system@jag.mil&gt;</span>
+                      </div>
+                      <div className="outlook-to-line">
+                        <span className="outlook-label">To:</span>
+                        <span className="outlook-value">Legal Team &lt;legal-team@jag.mil&gt;</span>
+                      </div>
+                      <div className="outlook-subject-line">
+                        <span className="outlook-label">Subject:</span>
+                        <span className="outlook-value">Batch Processing Summary - {testEmails.length} Emails Analyzed</span>
+                      </div>
+                      <div className="outlook-time-line">
+                        <span className="outlook-label">Received:</span>
+                        <span className="outlook-value">{new Date().toLocaleString()}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="outlook-divider"></div>
+                    
+                    <div className="outlook-summary-body">
+                      {summaryLoading ? (
+                        <div className="summary-loading-container">
+                          <div className="summary-loading-text">Generating summary...</div>
+                          <div className="summary-progress-bar">
+                            <div 
+                              className="summary-progress-fill"
+                              style={{ width: `${summaryProgress}%` }}
+                            ></div>
+                          </div>
+                          <div className="summary-progress-percent">{summaryProgress}%</div>
+                        </div>
+                      ) : (
+                        <>
+                          {typedSummary}
+                          {typedSummary.length < 500 && <span className="typing-cursor">|</span>}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
           </div>
+        
         )}
       </div>
 
