@@ -397,8 +397,11 @@ const handleProcessEmailOfficial = async () => {
     await new Promise(resolve => setTimeout(resolve, 800));
     
     // Generate summary based on extracted entities
-    const summary = generateSummary(mappedEntities, relationships);
-    
+    // const summary = generateSummary(mappedEntities, relationships);
+    const summary = generateSummaryFromEmail(
+      "JAG Legal Communication",
+      emailContent
+    );    
     setResults(prev => ({
       ...prev,
       summary: summary

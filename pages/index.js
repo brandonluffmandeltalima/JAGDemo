@@ -43,19 +43,44 @@ const handleProcessEmail = async () => {
     setResults({
       classification: {
         label: 'RELEVANT',
-        confidence: 0.94
+        confidence: 0.98
       },
       entities: [
-        { text: 'CPT John Smith', type: 'PERSON', color: '#3b82f6' },
-        { text: 'Fort Bragg', type: 'GPE', color: '#10b981' },
-        { text: 'Article 15', type: 'LAW', color: '#f59e0b' },
-        { text: '15 March 2024', type: 'DATE', color: '#8b5cf6' }
+        { text: 'Staff Sergeant Michael A. Reynolds', type: 'PERSON', color: '#3b82f6' },
+        { text: 'Brandon Luffman', type: 'PERSON', color: '#3b82f6' },
+        { text: 'Fort Liberty, North Carolina', type: 'GPE', color: '#10b981' },
+        { text: 'Smoke Bomb Hill Training Area', type: 'FACILITY', color: '#10b981' },
+        { text: 'Article 92, UCMJ', type: 'LAW', color: '#f59e0b' },
+        { text: 'Case No. 24-MJ-117', type: 'CASE', color: '#ef4444' },
+        { text: '14 March 2024', type: 'DATE', color: '#8b5cf6' },
+        { text: '22 March 2024', type: 'DATE', color: '#8b5cf6' },
+        { text: '10 January 2025', type: 'DATE', color: '#8b5cf6' },
+        { text: 'Fort Liberty Military Justice Court', type: 'ORG', color: '#06b6d4' },
+        { text: 'CID Special Agent Laura M. Bennett', type: 'PERSON', color: '#3b82f6' },
+        { text: '82nd Airborne Division, 1st Brigade Combat Team', type: 'ORG', color: '#06b6d4' }
       ],
+
       relationships: [
-        { from: 'CPT John Smith', relation: 'STATIONED_AT', to: 'Fort Bragg' },
-        { from: 'CPT John Smith', relation: 'INVOLVED_IN', to: 'Article 15' }
+        { from: 'Staff Sergeant Michael A. Reynolds', relation: 'ASSIGNED_TO', to: '82nd Airborne Division, 1st Brigade Combat Team' },
+        { from: 'Staff Sergeant Michael A. Reynolds', relation: 'REPRESENTED_BY', to: 'Brandon Luffman' },
+        { from: 'Staff Sergeant Michael A. Reynolds', relation: 'CHARGED_WITH', to: 'Article 92, UCMJ' },
+        { from: 'Article 92, UCMJ', relation: 'PART_OF', to: 'Case No. 24-MJ-117' },
+        { from: 'Case No. 24-MJ-117', relation: 'FILED_IN', to: 'Fort Liberty Military Justice Court' },
+        { from: 'Case No. 24-MJ-117', relation: 'OCCURRED_AT', to: 'Smoke Bomb Hill Training Area' },
+        { from: 'Case No. 24-MJ-117', relation: 'OCCURRED_AT', to: 'Fort Liberty, North Carolina' },
+        { from: 'Case No. 24-MJ-117', relation: 'EVENT_DATE', to: '14 March 2024' },
+        { from: 'Case No. 24-MJ-117', relation: 'CHARGE_DATE', to: '22 March 2024' },
+        { from: 'Case No. 24-MJ-117', relation: 'HEARING_DATE', to: '10 January 2025' },
+        { from: 'CID Special Agent Laura M. Bennett', relation: 'INVESTIGATES', to: 'Case No. 24-MJ-117' }
       ],
-      summary: 'Article 15 hearing shceduled for March 15, 2024.'
+      summary: `Updates to Case 24-MJ-117
+- Defense Counsel: Brandon Luffman has entered an appearance on behalf of Staff Sergeant Michael A. Reynolds, U.S. Army.
+- Service Member Assignment: 82nd Airborne Division, 1st Brigade Combat Team, Fort Liberty, North Carolina.
+- Jurisdiction: Fort Liberty Military Justice Court; proceeding under the Uniform Code of Military Justice.
+- Alleged Incident: 14 March 2024 at Smoke Bomb Hill Training Area, Fort Liberty, NC.
+- Charge: Article 92, UCMJ – Failure to Obey a Lawful Order (charge sheet dated 22 March 2024).
+- Hearing: Article 32 preliminary hearing scheduled for 10 January 2025 at the Fort Liberty Legal Services Facility.
+- Investigation: CID Special Agent Laura M. Bennett assigned as investigating agent.`
     });
     setProcessing(false);
   }, 2000);
@@ -316,7 +341,7 @@ const generateSummary = (entities, relationships) => {
             <Mail />
           </div>
           <h3 className="step-title">Email Ingestion</h3>
-          <p className="step-description">JAG attorney emails are collected and queued for processing</p>
+          <p className="step-description">Attorney emails are collected and queued for processing</p>
         </div>
 
         <div className="pipeline-arrow">→</div>
@@ -326,7 +351,7 @@ const generateSummary = (entities, relationships) => {
             <Binary />
           </div>
           <h3 className="step-title">Binary Classification</h3>
-          <p className="step-description">Determines whether each incoming JAG attorney email is relevant or irrelevant</p>
+          <p className="step-description">Determines whether an incoming email is relevant</p>
         </div>
 
         <div className="pipeline-arrow">→</div>
@@ -368,7 +393,7 @@ const generateSummary = (entities, relationships) => {
             </div>
             <div>
               <h3 className="step-title">Email Ingestion</h3>
-              <p className="step-description">JAG attorney emails are collected and queued for processing</p>
+              <p className="step-description">Attorney emails are collected and queued for processing</p>
             </div>
           </div>
           <div className="detail-animation">
@@ -400,7 +425,7 @@ const generateSummary = (entities, relationships) => {
             </div>
             <div>
               <h3 className="step-title">Binary Classification</h3>
-              <p className="step-description">Determines whether each incoming JAG attorney email is relevant or irrelevant</p>
+              <p className="step-description">Determines whether an incoming email is relevant</p>
             </div>
           </div>
           <div className="detail-animation">
@@ -513,7 +538,7 @@ const generateSummary = (entities, relationships) => {
             <div className="outlook-email-summary">
               <div className="email-header-line">
                 <span className="header-label">From:</span>
-                <span className="header-value">JAG Intelligence System</span>
+                <span className="header-value">Attorney Intelligence System</span>
               </div>
               <div className="email-header-line">
                 <span className="header-label">To:</span>
@@ -936,7 +961,7 @@ const renderMVP = () => {
               <div className="outlook-email-result">
                 <div className="email-header-line">
                   <span className="header-label">From:</span>
-                  <span className="header-value">JAG Intelligence System</span>
+                  <span className="header-value">Attorney Intelligence System</span>
                 </div>
                 <div className="email-header-line">
                   <span className="header-label">To:</span>
@@ -1243,7 +1268,7 @@ const renderMVP = () => {
               <Mail />
             </div>
             <div className="brand-text">
-              <h1 className="brand-title">JAG Email Intelligence</h1>
+              <h1 className="brand-title">Attorney Email Intelligence</h1>
               <p className="brand-subtitle">Graph Database Email Processing System</p>
             </div>
           </div>
