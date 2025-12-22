@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Mail, Database, BarChart3, Send, AlertCircle, GitBranch, Users, FileText, Binary, Layers, Clock, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import NerAnnotatedEmail from '@/components/NERAnnotated';
 
 export default function MVPPage() {
   const [activeView, setActiveView] = useState('mvp');
@@ -190,18 +191,21 @@ const handleProcessEmail = async () => {
         confidence: 0.98
       },
       entities: [
-        { text: 'Staff Sergeant Michael A. Reynolds', type: 'PERSON', color: '#3b82f6' },
-        { text: 'John Smith', type: 'PERSON', color: '#3b82f6' },
-        { text: 'Fort Liberty, North Carolina', type: 'GPE', color: '#10b981' },
-        { text: 'Smoke Bomb Hill Training Area', type: 'FACILITY', color: '#10b981' },
-        { text: 'Article 92, UCMJ', type: 'LAW', color: '#f59e0b' },
-        { text: 'Case No. 24-MJ-117', type: 'CASE', color: '#ef4444' },
-        { text: '14 March 2024', type: 'DATE', color: '#8b5cf6' },
-        { text: '22 March 2024', type: 'DATE', color: '#8b5cf6' },
-        { text: '10 January 2025', type: 'DATE', color: '#8b5cf6' },
-        { text: 'Fort Liberty Military Justice Court', type: 'ORG', color: '#06b6d4' },
-        { text: 'CID Special Agent Laura M. Bennett', type: 'PERSON', color: '#3b82f6' },
-        { text: '82nd Airborne Division, 1st Brigade Combat Team', type: 'ORG', color: '#06b6d4' }
+        { text: 'Staff Sergeant Michael A. Reynolds', type: 'PERSON', color: '#3b82f6', start: 25, end: 60 },
+        { text: 'United States Army', type: 'ORG', color: '#06b6d4', start: 62, end: 80 },
+        { text: '82nd Airborne Division, 1st Brigade Combat Team', type: 'ORG', color: '#06b6d4', start: 106, end: 154 },
+        { text: 'Fort Liberty, North Carolina', type: 'GPE', color: '#10b981', start: 169, end: 197 },
+        { text: 'Case No. 24-MJ-117', type: 'CASE', color: '#ef4444', start: 291, end: 309 },
+        { text: 'Fort Liberty Military Justice Court', type: 'COURT', color: '#9b3962', start: 335, end: 370 },
+        { text: 'Uniform Code of Military Justice', type: 'LAW', color: '#f59e0b', start: 398, end: 430 },
+        { text: 'UCMJ', type: 'LAW', color: '#f59e0b', start: 432, end: 436 },
+        { text: '14 March 2024', type: 'DATE', color: '#8b5cf6', start: 527, end: 540 },
+        { text: 'Smoke Bomb Hill Training Area', type: 'FACILITY', color: '#10b981', start: 555, end: 585 },
+        { text: '22 March 2024', type: 'DATE', color: '#8b5cf6', start: 654, end: 667 },
+        { text: 'Article 92, UCMJ', type: 'LAW', color: '#f59e0b', start: 710, end: 726 },
+        { text: '10 January 2025', type: 'DATE', color: '#8b5cf6', start: 897, end: 912 },
+        { text: 'Fort Liberty Legal Services Facility', type: 'FACILITY', color: '#10b981', start: 934, end: 970 },
+        { text: 'CID Special Agent Laura M. Bennett', type: 'PERSON', color: '#3b82f6', start: 1048, end: 1082 }
       ],
 
       relationships: [
@@ -489,7 +493,7 @@ const generateSummary = (entities, relationships) => {
               <Mail />
             </div>
             <div className="brand-text">
-              <h1 className="brand-title">JAG Email Intelligence</h1>
+              <h1 className="brand-title">Attorney Email Intelligence</h1>
               <p className="brand-subtitle">Graph Database Email Processing System</p>
             </div>
           </div>
@@ -812,7 +816,7 @@ const generateSummary = (entities, relationships) => {
                     <div className="outlook-summary-header">
                       <div className="outlook-from-line">
                         <span className="outlook-label">From:</span>
-                        <span className="outlook-value">JAG Intelligence System &lt;system@jag.mil&gt;</span>
+                        <span className="outlook-value">Attorney Intelligence System &lt;system@jag.mil&gt;</span>
                       </div>
                       <div className="outlook-to-line">
                         <span className="outlook-label">To:</span>
@@ -944,6 +948,31 @@ const generateSummary = (entities, relationships) => {
             </div>
           )}
 
+           {results.entities && results.entities.length > 0 && emailContent && (
+                    <div className="results-card summary-card-mvp">
+              <h3 className="results-title">Annotated Email</h3>
+              <div className="outlook-email-result">
+                <div className="email-header-line">
+                  <span className="header-label">From:</span>
+                  <span className="header-value">Attorney Intelligence System</span>
+                </div>
+                <div className="email-header-line">
+                  <span className="header-label">To:</span>
+                  <span className="header-value">Legal Team</span>
+                </div>
+                <div className="email-header-line">
+                  <span className="header-label">Subject:</span>
+                  <span className="header-value">Graph Database Update Summary</span>
+                </div>
+                <div className="email-divider"></div>
+                <div className="email-body-result">
+                  <p>  <NerAnnotatedEmail /></p>
+                </div>
+              </div>
+            </div>
+          )}
+
+
           {results.entities && results.entities.length > 0 && (
             <div className="results-card entities-card">
               <h3 className="results-title">Extracted Entities</h3>
@@ -981,7 +1010,7 @@ const generateSummary = (entities, relationships) => {
               <div className="outlook-email-result">
                 <div className="email-header-line">
                   <span className="header-label">From:</span>
-                  <span className="header-value">JAG Intelligence System</span>
+                  <span className="header-value">Attorney Intelligence System</span>
                 </div>
                 <div className="email-header-line">
                   <span className="header-label">To:</span>

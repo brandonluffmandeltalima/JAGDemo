@@ -300,7 +300,7 @@ const generateSummary = (entities, relationships) => {
               <Mail />
             </div>
             <div className="brand-text">
-              <h1 className="brand-title">JAG Email Intelligence</h1>
+              <h1 className="brand-title">Attorney Email Intelligence</h1>
               <p className="brand-subtitle">Graph Database Email Processing System</p>
             </div>
           </div>
