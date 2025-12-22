@@ -466,7 +466,7 @@
 /* Optional: Make the bold headers stand out more */
 .summary-content strong {
   display: block; /* Puts headers on their own line */
-  margin-bottom: 15px;
+  margin-top: 15px;
   color: #fff;
   font-size: 20px;
 }
