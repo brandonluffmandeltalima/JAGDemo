@@ -134,14 +134,11 @@ const startTypingEffect = async () => {
 // To: CPT John Smith, JAGC
 // Subject: Weekly Case Update – Thompson & Alvarez Matters
   const fullSummary = `
-
 Good afternoon CPT Smith,
 
 Below is your weekly litigation update summarizing activity from the past week:\n\n
 
 Case 1: Thompson v. United States (FTCA – GOV Accident)
-
-Recent Updates:
 
 Discovery review suggests defensible liability posture, including evidence of possible plaintiff contributory negligence.
 
@@ -153,9 +150,7 @@ Plaintiff informally signaling a high settlement demand, though damages appear i
 
 Next steps may include pushing back on settlement posture and considering a Rule 35 IME once medical records are complete.
 
-Case 2: Alvarez v. United States (Premises Liability – Training Range Injury)
-
-Recent Updates:
+Case 2: Alvarez v. United States (Premises Liability – Training Range Injury):
 
 Command Investigation confirms prior notice of hazardous range conditions and delayed maintenance.
 
@@ -180,6 +175,18 @@ Coordination with DPW and USARCS advised to assess settlement authority.
       clearInterval(typingInterval);
     }
   }, 20);
+};
+
+const formatSummary = (text) => {
+  // Regex to find "Case X: ..." or headers ending in a colon like "Recent Updates:"
+  const parts = text.split(/(Case \d+:.*|Recent Updates:|Next steps.*:)/g);
+
+  return parts.map((part, index) => {
+    if (part.match(/(Case \d+:.*|Recent Updates:|Next steps.*:)/g)) {
+      return <strong key={index}>{part}</strong>;
+    }
+    return part;
+  });
 };
 
 const handleProcessEmail = async () => {
@@ -848,8 +855,10 @@ const generateSummary = (entities, relationships) => {
                         </div>
                       ) : (
                         <>
-                          {typedSummary}
+                        <div className='summary-content'>
+                          {formatSummary(typedSummary)}
                           {typedSummary.length < 500 && <span className="typing-cursor">|</span>}
+                          </div>
                         </>
                       )}
                     </div>
