@@ -426,14 +426,14 @@ const handleProcessEmailOfficial = async () => {
     
     // Generate summary based on extracted entities
     // const summary = generateSummary(mappedEntities, relationships);
-    const summary = generateSummaryFromEmail(
-      "JAG Legal Communication",
-      emailContent
-    );    
-    setResults(prev => ({
-      ...prev,
-      summary: summary
-    }));
+    // const summary = generateSummaryFromEmail(
+    //   "JAG Legal Communication",
+    //   emailContent
+    // );    
+    // setResults(prev => ({
+    //   ...prev,
+    //   summary: summary
+    // }));
 
     setPipelineStep('complete');
 
