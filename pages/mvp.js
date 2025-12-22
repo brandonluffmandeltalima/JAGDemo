@@ -948,7 +948,7 @@ const generateSummary = (entities, relationships) => {
             </div>
           )}
 
-           {results.entities && results.entities.length > 0 && emailContent && (
+           {!useRealAPI && results.entities && results.entities.length > 0 && emailContent && (
                     <div className="results-card summary-card-mvp">
               <h3 className="results-title">Annotated Email</h3>
               <div className="outlook-email-result">
