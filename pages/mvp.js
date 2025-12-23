@@ -18,6 +18,7 @@ export default function MVPPage() {
 const [typedSummary, setTypedSummary] = useState('');
 const [summaryLoading, setSummaryLoading] = useState(false);
 const [summaryProgress, setSummaryProgress] = useState(0);
+const [subjectContent, setSubjectContent] = useState("")
 
 const testEmails = [
   {
@@ -188,6 +189,21 @@ const formatSummary = (text) => {
     return part;
   });
 };
+const placeholderSubject = `Notice of Representation, Case Coordination, and Preservation of Evidence – Case No. 24-MJ-117`
+const placeholderEmail = `Dear Counsel,
+This firm represents Staff Sergeant Michael A. Reynolds, United States Army, currently assigned to the 82nd Airborne Division, 1st Brigade Combat Team, stationed at Fort Liberty, North Carolina. This correspondence serves as formal notice of representation in connection with Case No. 24-MJ-117, presently filed in the Fort Liberty Military Justice Court and arising under the Uniform Code of Military Justice (UCMJ).
+The above-referenced case concerns allegations stemming from events alleged to have occurred on 14 March 2024 at or near Smoke Bomb Hill Training Area, Fort Liberty, North Carolina. As reflected in the charge sheet dated 22 March 2024, Staff Sergeant Reynolds has been charged with Article 92, UCMJ (Failure to Obey a Lawful Order). My client denies these allegations.
+This matter is part of an ongoing military justice proceeding, with an Article 32 preliminary hearing currently scheduled for 10 January 2025, to be held at the Fort Liberty Legal Services Facility, Building 4-2843. The case file includes investigative materials compiled by CID Special Agent Laura M. Bennett, multiple sworn witness statements, unit policies, and command directives referenced by the Government in support of the charge.
+Please be advised that the evidence presently contained in the case file both supports and materially contradicts the allegations asserted. Several documents originate from internal unit taskings issued between 1 February 2024 and 12 March 2024, including duty rosters, operational emails, and training directives discussed during a command meeting held on 5 March 2024 at 1-82 IN Headquarters, Fort Liberty.
+Accordingly, this letter constitutes a formal demand for preservation of evidence. You and your client are hereby instructed to preserve all documents, reports, communications, electronic records, messages, photographs, videos, and other materials that reference, document, support, or contradict the allegations in this case. This obligation extends to materials in the possession of command staff, investigators, witnesses, and any collaborating units or legal advisors.
+Please also confirm whether the Government intends to introduce additional motions or supplemental evidence prior to the scheduled hearing. Any failure to disclose or preserve relevant materials may result in appropriate motions for relief, including evidentiary sanctions or dismissal.
+Nothing contained herein shall be construed as a waiver of any rights, defenses, or appellate remedies available to my client. All such rights are expressly reserved.
+Kindly direct all future communications regarding this matter to my office.
+Respectfully,
+John Smith
+Attorney at Law
+Counsel for Staff Sergeant Michael A. Reynolds
+Fort Liberty, North Carolina`
 
 const handleProcessEmail = async () => {
   setProcessing(true);
@@ -592,6 +608,7 @@ const generateSummary = (entities, relationships) => {
                       setTypedSummary('');
                       setSummaryLoading(false);
                       setSummaryProgress(0);
+                      setUseRealAPI(false);
               }}
               disabled={processing}
             >
@@ -604,7 +621,27 @@ const generateSummary = (entities, relationships) => {
       <div className="mvp-content">
         {processingMode === 'single' ? (
           <div className="email-input-section">
+            <div className='email-input-flexer'>
             <label className="input-label">Compose Email</label>
+            <div className="api-toggle">
+              <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={useRealAPI}
+                onChange={(e) => {
+                  const isChecked = e.target.checked;
+                  setUseRealAPI(isChecked);
+                  setEmailContent(isChecked ? '' : 'Testing'); // Reset based on the new toggle state
+                }}
+                className="toggle-checkbox"
+              />
+                <span className="toggle-switch"></span>
+                <span className="toggle-text">
+                  {useRealAPI ? 'Using Live API' : 'Using Demo Mode'}
+                </span>
+              </label>
+            </div>
+            </div>
             <div className="email-draft-container">
               <div className="draft-header-fields">
                 <div className="draft-field">
@@ -627,21 +664,21 @@ const generateSummary = (entities, relationships) => {
                 </div>
                 <div className="draft-field">
                   <span className="draft-label">Subject:</span>
-                  <input type="text" className="draft-input" placeholder="Email subject..." />
+                  <input type="text" className="draft-input" onChange={(e) => setSubjectContent(e.target.value)} placeholder="Email subject..." value={useRealAPI ? subjectContent : placeholderSubject} />
                 </div>
               </div>
               <textarea
-                className="email-textarea-draft"
-                placeholder="Type your message here...&#10;&#10;Example: CPT John Smith stationed at Fort Bragg is scheduled for an Article 15 hearing on March 15, 2024..."
-                value={emailContent}
-                onChange={(e) => setEmailContent(e.target.value)}
-                rows={10}
-              />
+                  className="email-textarea-draft"
+                  placeholder="Type your message here...&#10;&#10;Example: CPT John Smith stationed at Fort Bragg is scheduled for an Article 15 hearing on March 15, 2024..."
+                  value={useRealAPI ? emailContent : placeholderEmail}
+                  onChange={(e) => setEmailContent(e.target.value)}
+                  rows={10}
+                />
             </div>
             <button
               className={`process-button ${processing ? 'processing' : ''}`}
               onClick={useRealAPI ? handleProcessEmailOfficial : handleProcessEmail}
-              disabled={processing || !emailContent}
+              disabled={processing}
             >
               {processing ? (
                 <>
@@ -655,21 +692,6 @@ const generateSummary = (entities, relationships) => {
                 </>
               )}
             </button>
-
-            <div className="api-toggle">
-              <label className="toggle-label">
-                <input
-                  type="checkbox"
-                  checked={useRealAPI}
-                  onChange={(e) => setUseRealAPI(e.target.checked)}
-                  className="toggle-checkbox"
-                />
-                <span className="toggle-switch"></span>
-                <span className="toggle-text">
-                  {useRealAPI ? 'Using Live API' : 'Using Demo Mode'}
-                </span>
-              </label>
-            </div>
           </div>
         ) : (
           <div className="batch-processing-section">
@@ -699,7 +721,7 @@ const generateSummary = (entities, relationships) => {
               </button>
             </div>
 
-            <div className="api-toggle">
+            {/* <div className="api-toggle">
               <label className="toggle-label">
                 <input
                   type="checkbox"
@@ -712,7 +734,7 @@ const generateSummary = (entities, relationships) => {
                   {useRealAPI ? 'Using Live API' : 'Using Demo Mode'}
                 </span>
               </label>
-            </div>
+            </div> */}
 
             {/* Test Emails Preview */}
             <div className="batch-emails-preview">
@@ -1031,7 +1053,7 @@ const generateSummary = (entities, relationships) => {
                 </div>
                 <div className="email-divider"></div>
                 <div className="email-body-result">
-                  <p>{results.summary}</p>
+                  <p>{formatSummary(results.summary)}</p>
                 </div>
               </div>
             </div>

@@ -46,6 +46,10 @@
   border-radius: 20px;
   border: 1px solid rgba(71, 85, 105, 0.5);
 }
+.email-input-flexer {
+  display: flex;
+  justify-content: space-between;
+}
 
 .email-body-text {
   white-space: pre-wrap;   /* preserves \n and spacing */
@@ -471,6 +475,24 @@
   font-size: 20px;
 }
 
+.email-body-result p {
+  white-space: pre-wrap; 
+  
+  /* Optional: Standardizes the look */
+  font-family: inherit;
+  line-height: 1.6;
+  padding: 10px;
+}
+/* Optional: Make the bold headers stand out more */
+.email-body-result p strong {
+  display: block; /* Puts headers on their own line */
+  margin-top: 15px;
+  color: #fff;
+  font-size: 20px;
+}
+
+
+
 
 
 /* Relationships Card */
@@ -592,9 +614,11 @@
 
 /* API Toggle Styles */
 .api-toggle {
-  margin-top: 16px;
+  /* margin-top: 16px; */
   display: flex;
   justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
 }
 
 .toggle-label {
@@ -642,6 +666,8 @@
   color: #e2e8f0;
   font-size: 14px;
   font-weight: 500;
+  top: -1px;
+  position: relative;
 }
 
 /* Pipeline Progress Styles */
