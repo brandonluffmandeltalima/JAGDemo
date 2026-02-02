@@ -146,7 +146,7 @@ Attorney at Law
 Counsel for Staff Sergeant Michael A. Reynolds
 Fort Liberty, North Carolina`;
 
-// Enhanced entity extraction for placeholder email - FIXED to catch all entities
+// Enhanced entity extraction for placeholder email
 const extractPlaceholderEntities = () => {
   const text = placeholderEmail;
   const entities = [];
@@ -335,7 +335,7 @@ const extractPlaceholderEntities = () => {
     }
   });
 
-  // MOTION entity (implicit)
+  // MOTION entity
   const motionPattern = /motions for relief/g;
   while ((match = motionPattern.exec(text)) !== null) {
     entities.push({
@@ -379,7 +379,6 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
   const entities = [];
   
   if (isEmail1 || text.includes("Thompson v. United States")) {
-    // Case entity
     const caseMatch = text.match(/Thompson v\. United States/);
     if (caseMatch) {
       entities.push({
@@ -398,7 +397,6 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
       });
     }
 
-    // Parties
     const plaintiffIdx = text.toLowerCase().indexOf('plaintiff');
     if (plaintiffIdx !== -1) {
       entities.push({
@@ -417,7 +415,6 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
       });
     }
 
-    // Legal issues
     if (text.includes('negligence')) {
       entities.push({
         text: 'negligence',
@@ -434,7 +431,6 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
       });
     }
 
-    // Evidence
     if (text.includes('Vehicle inspection logs')) {
       entities.push({
         text: 'Vehicle inspection logs',
@@ -452,7 +448,6 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
       });
     }
 
-    // Persons
     const maj = text.match(/MAJ Allen/);
     if (maj) {
       entities.push({
@@ -623,7 +618,8 @@ const createAnnotatedText = (text, entities) => {
             marginLeft: '4px',
             fontSize: '0.7rem',
             fontWeight: '600',
-            whiteSpace: 'nowrap'
+            whiteSpace: 'nowrap',
+            verticalAlign: 'baseline'
           }}
         >
           {labelText}
@@ -712,97 +708,117 @@ const formatSummary = (text) => {
 
 const handleProcessEmail = async () => {
   setProcessing(true);
+  setPipelineStep('classification');
   
-  setTimeout(() => {
-    const textToProcess = useRealAPI ? emailContent : placeholderEmail;
-    const mockEntities = extractPlaceholderEntities();
+  await new Promise(resolve => setTimeout(resolve, 1200));
+  
+  const textToProcess = useRealAPI ? emailContent : placeholderEmail;
+  const mockEntities = extractPlaceholderEntities();
+  
+  setResults({
+    classification: {
+      label: 'RELEVANT',
+      confidence: 0.98
+    }
+  });
+  
+  setPipelineStep('ner');
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  setResults(prev => ({
+    ...prev,
+    entities: mockEntities,
+    originalText: textToProcess,
+    relationships: []
+  }));
+  
+  setPipelineStep('graph');
+  await new Promise(resolve => setTimeout(resolve, 1200));
 
-    // Generate relationships with properties
-    const relationships = [
-      { 
-        from: 'Staff Sergeant Michael A. Reynolds', 
-        relation: 'ASSIGNED_TO', 
-        to: '82nd Airborne Division, 1st Brigade Combat Team',
-        properties: { assignment_type: 'Permanent', date_assigned: '2023-06-15' }
-      },
-      { 
-        from: 'Staff Sergeant Michael A. Reynolds', 
-        relation: 'REPRESENTED_BY', 
-        to: 'John Smith',
-        properties: { representation_type: 'Defense Counsel', date_retained: '2024-03-25' }
-      },
-      { 
-        from: 'Staff Sergeant Michael A. Reynolds', 
-        relation: 'CHARGED_WITH', 
-        to: 'Article 92, UCMJ',
-        properties: { charge_date: '2024-03-22', plea: 'Not Guilty' }
-      },
-      { 
-        from: 'Case No. 24-MJ-117', 
-        relation: 'INVOLVES', 
-        to: 'Staff Sergeant Michael A. Reynolds',
-        properties: { role: 'Accused' }
-      },
-      { 
-        from: 'Case No. 24-MJ-117', 
-        relation: 'FILED_IN', 
-        to: 'Fort Liberty Military Justice Court',
-        properties: { filing_date: '2024-03-22' }
-      },
-      { 
-        from: 'Case No. 24-MJ-117', 
-        relation: 'OCCURRED_AT', 
-        to: 'Smoke Bomb Hill Training Area',
-        properties: { incident_date: '2024-03-14' }
-      },
-      { 
-        from: 'CID Special Agent Laura M. Bennett', 
-        relation: 'INVESTIGATES', 
-        to: 'Case No. 24-MJ-117',
-        properties: { investigation_start: '2024-03-15', status: 'Ongoing' }
-      },
-      { 
-        from: 'Article 32 preliminary hearing', 
-        relation: 'PART_OF', 
-        to: 'Case No. 24-MJ-117',
-        properties: { hearing_date: '2025-01-10', purpose: 'Probable Cause Determination' }
-      }
-    ];
+  // Generate relationships with properties
+  const relationships = [
+    { 
+      from: 'Staff Sergeant Michael A. Reynolds', 
+      relation: 'ASSIGNED_TO', 
+      to: '82nd Airborne Division, 1st Brigade Combat Team',
+      properties: { assignment_type: 'Permanent', date_assigned: '2023-06-15' }
+    },
+    { 
+      from: 'Staff Sergeant Michael A. Reynolds', 
+      relation: 'REPRESENTED_BY', 
+      to: 'John Smith',
+      properties: { representation_type: 'Defense Counsel', date_retained: '2024-03-25' }
+    },
+    { 
+      from: 'Staff Sergeant Michael A. Reynolds', 
+      relation: 'CHARGED_WITH', 
+      to: 'Article 92, UCMJ',
+      properties: { charge_date: '2024-03-22', plea: 'Not Guilty' }
+    },
+    { 
+      from: 'Case No. 24-MJ-117', 
+      relation: 'INVOLVES', 
+      to: 'Staff Sergeant Michael A. Reynolds',
+      properties: { role: 'Accused' }
+    },
+    { 
+      from: 'Case No. 24-MJ-117', 
+      relation: 'FILED_IN', 
+      to: 'Fort Liberty Military Justice Court',
+      properties: { filing_date: '2024-03-22' }
+    },
+    { 
+      from: 'Case No. 24-MJ-117', 
+      relation: 'OCCURRED_AT', 
+      to: 'Smoke Bomb Hill Training Area',
+      properties: { incident_date: '2024-03-14' }
+    },
+    { 
+      from: 'CID Special Agent Laura M. Bennett', 
+      relation: 'INVESTIGATES', 
+      to: 'Case No. 24-MJ-117',
+      properties: { investigation_start: '2024-03-15', status: 'Ongoing' }
+    },
+    { 
+      from: 'Article 32 preliminary hearing', 
+      relation: 'PART_OF', 
+      to: 'Case No. 24-MJ-117',
+      properties: { hearing_date: '2025-01-10', purpose: 'Probable Cause Determination' }
+    }
+  ];
 
-    // Generate graph changes
-    const graphChanges = {
-      nodes_added: [
-        { id: 'PERSON_REYNOLDS', label: 'SSG Michael A. Reynolds', type: 'PERSON' },
-        { id: 'CASE_24MJ117', label: 'Case No. 24-MJ-117', type: 'CASE' },
-        { id: 'PERSON_SMITH', label: 'John Smith', type: 'PERSON' },
-        { id: 'PERSON_BENNETT', label: 'SA Laura M. Bennett', type: 'PERSON' },
-        { id: 'LOC_FORT_LIBERTY', label: 'Fort Liberty, NC', type: 'LOCATION' },
-        { id: 'LOC_SMOKE_BOMB', label: 'Smoke Bomb Hill', type: 'LOCATION' },
-        { id: 'STATUTE_ART92', label: 'Article 92, UCMJ', type: 'STATUTE' },
-        { id: 'HEARING_ART32', label: 'Article 32 Hearing', type: 'HEARING' }
-      ],
-      relationships: relationships,
-      relationships_added: relationships.length,
-      properties_updated: 23,
-      existing_nodes_updated: 0
-    };
+  // Generate graph changes
+  const graphChanges = {
+    nodes_added: [
+      { id: 'PERSON_REYNOLDS', label: 'SSG Michael A. Reynolds', type: 'PERSON' },
+      { id: 'CASE_24MJ117', label: 'Case No. 24-MJ-117', type: 'CASE' },
+      { id: 'PERSON_SMITH', label: 'John Smith', type: 'PERSON' },
+      { id: 'PERSON_BENNETT', label: 'SA Laura M. Bennett', type: 'PERSON' },
+      { id: 'LOC_FORT_LIBERTY', label: 'Fort Liberty, NC', type: 'LOCATION' },
+      { id: 'LOC_SMOKE_BOMB', label: 'Smoke Bomb Hill', type: 'LOCATION' },
+      { id: 'STATUTE_ART92', label: 'Article 92, UCMJ', type: 'STATUTE' },
+      { id: 'HEARING_ART32', label: 'Article 32 Hearing', type: 'HEARING' }
+    ],
+    relationships: relationships,
+    relationships_added: relationships.length,
+    properties_updated: 23,
+    existing_nodes_updated: 0
+  };
 
-    setGraphChanges(graphChanges);
-    setGraphAnimation({ nodes: graphChanges.nodes_added, relationships: relationships });
+  setGraphChanges(graphChanges);
+  setGraphAnimation({ nodes: graphChanges.nodes_added, relationships: relationships });
 
-    setResults({
-      classification: {
-        label: 'RELEVANT',
-        confidence: 0.98
-      },
-      entities: mockEntities,
-      originalText: textToProcess,
-      relationships: relationships,
-      summary: `New case development: Staff Sergeant Michael A. Reynolds has been charged with Article 92, UCMJ (Failure to Obey a Lawful Order) in Case No. 24-MJ-117. Defense counsel John Smith has been retained and has filed a formal notice of representation. An Article 32 preliminary hearing is scheduled for 10 January 2025 at Fort Liberty. The incident allegedly occurred on 14 March 2024 at Smoke Bomb Hill Training Area. CID Special Agent Laura M. Bennett is conducting the investigation. The defense has filed a preservation of evidence demand covering all documents, communications, and materials from 1 February 2024 through present. Key evidence includes charge sheet, witness statements, unit policies, command directives, duty rosters, operational emails, and training directives. The defense maintains SSG Reynolds' innocence and has reserved all rights and appellate remedies.`
-    });
-    
-    setProcessing(false);
-  }, 2000);
+  setResults(prev => ({
+    ...prev,
+    relationships: relationships,
+    summary: `New case development:\n Staff Sergeant Michael A. Reynolds has been charged with Article 92, UCMJ (Failure to Obey a Lawful Order) in Case No. 24-MJ-117. Defense counsel John Smith has been retained and has filed a formal notice of representation. An Article 32 preliminary hearing is scheduled for 10 January 2025 at Fort Liberty. The incident allegedly occurred on 14 March 2024 at Smoke Bomb Hill Training Area. CID Special Agent Laura M. Bennett is conducting the investigation. The defense has filed a preservation of evidence demand covering all documents, communications, and materials from 1 February 2024 through present. Key evidence includes charge sheet, witness statements, unit policies, command directives, duty rosters, operational emails, and training directives. The defense maintains SSG Reynolds' innocence and has reserved all rights and appellate remedies.`
+  }));
+  
+  setPipelineStep('summary');
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  setPipelineStep('complete');
+  setProcessing(false);
 };
 
 const handleProcessEmailWithAPI = async () => {
@@ -814,7 +830,6 @@ const handleProcessEmailWithAPI = async () => {
     const emailId = `email_${Date.now()}`;
     const fullText = `Subject: ${subjectContent}\n\n${emailContent}`;
 
-    // ---------- CLASSIFICATION ----------
     const classifyRes = await fetch(
       "https://ner-hh1e.onrender.com/classify",
       {
@@ -841,7 +856,6 @@ const handleProcessEmailWithAPI = async () => {
       }
     });
 
-    // ---------- NER ----------
     setPipelineStep('ner');
 
     const nerRes = await fetch(
@@ -884,7 +898,6 @@ const handleProcessEmailWithAPI = async () => {
       relationships: []
     }));
 
-    // ---------- GRAPH + SUMMARY (UI only for now) ----------
     setPipelineStep('graph');
     await new Promise(r => setTimeout(r, 600));
 
@@ -963,7 +976,6 @@ const handleBatchProcess = async () => {
       });
     }
 
-    // Track graph changes
     entities.forEach(entity => {
       if (!allGraphNodes.has(entity.canonical_id)) {
         allGraphNodes.set(entity.canonical_id, {
@@ -995,7 +1007,6 @@ const handleBatchProcess = async () => {
     setBatchResults(prev => [...prev, mockResult]);
   }
 
-  // Set comprehensive batch graph changes
   setBatchGraphChanges({
     nodes_added: Array.from(allGraphNodes.values()),
     relationships_added: allGraphRelationships.length,
@@ -1106,19 +1117,19 @@ const handleBatchProcess = async () => {
           <div className="entity-types-display">
             <h4 className="entity-types-title">
               <Network size={16} style={{ marginRight: '8px' }} />
-              Extracting Entity Types:
+              Extracting Entity Types
             </h4>
             <div className="entity-types-grid">
               {ENTITY_TYPES.map((type, idx) => (
                 <span 
                   key={idx} 
                   className="entity-type-badge"
-                  style={{ borderColor: entityColorMap[type] }}
+                  style={{ backgroundColor: entityColorMap[type] }}
                 >
-                  <span 
+                  {/* <span 
                     className="entity-type-dot" 
                     style={{ backgroundColor: entityColorMap[type] }}
-                  ></span>
+                  ></span> */}
                   {type}
                 </span>
               ))}
@@ -1136,6 +1147,7 @@ const handleBatchProcess = async () => {
                   setBatchResults([]);
                   setGraphChanges(null);
                   setGraphAnimation(null);
+                  setPipelineStep(null);
                 }}
                 disabled={processing}
               >
@@ -1156,6 +1168,7 @@ const handleBatchProcess = async () => {
                   setGraphChanges(null);
                   setBatchGraphChanges(null);
                   setGraphAnimation(null);
+                  setPipelineStep(null);
                 }}
                 disabled={processing}
               >
@@ -1229,6 +1242,40 @@ const handleBatchProcess = async () => {
                     rows={10}
                   />
                 </div>
+
+                {/* Pipeline Progress Indicator */}
+                {processing && (
+                  <div className="pipeline-progress">
+                    <div className={`progress-step ${pipelineStep === 'classification' ? 'active' : pipelineStep && ['ner', 'graph', 'summary', 'complete'].includes(pipelineStep) ? 'complete' : ''}`}>
+                      <div className="progress-icon">
+                        <Binary size={20} />
+                      </div>
+                      <span>Classification</span>
+                    </div>
+                    <div className="progress-connector"></div>
+                    <div className={`progress-step ${pipelineStep === 'ner' ? 'active' : pipelineStep && ['graph', 'summary', 'complete'].includes(pipelineStep) ? 'complete' : ''}`}>
+                      <div className="progress-icon">
+                        <FileText size={20} />
+                      </div>
+                      <span>NER</span>
+                    </div>
+                    <div className="progress-connector"></div>
+                    <div className={`progress-step ${pipelineStep === 'graph' ? 'active' : pipelineStep && ['summary', 'complete'].includes(pipelineStep) ? 'complete' : ''}`}>
+                      <div className="progress-icon">
+                        <Network size={20} />
+                      </div>
+                      <span>Graph Update</span>
+                    </div>
+                    <div className="progress-connector"></div>
+                    <div className={`progress-step ${pipelineStep === 'summary' ? 'active' : pipelineStep === 'complete' ? 'complete' : ''}`}>
+                      <div className="progress-icon">
+                        <FileText size={20} />
+                      </div>
+                      <span>Summary</span>
+                    </div>
+                  </div>
+                )}
+
                 <button
                   className={`process-button ${processing ? 'processing' : ''}`}
                   onClick={useRealAPI ? handleProcessEmailWithAPI : handleProcessEmail}
@@ -1275,7 +1322,7 @@ const handleBatchProcess = async () => {
                   </button>
                 </div>
 
-                {/* Test Emails Preview - NO annotations */}
+                {/* Test Emails Preview */}
                 <div className="batch-emails-preview">
                   <h4 className="preview-title">Test Emails Queue</h4>
                   <div className="batch-emails-list">
@@ -1686,11 +1733,27 @@ const handleBatchProcess = async () => {
 // Graph Visualization Component
 function GraphVisualization({ graphData }) {
   const [animationComplete, setAnimationComplete] = useState(false);
+  const [highlightedNodes, setHighlightedNodes] = useState(new Set());
+  const [highlightedEdges, setHighlightedEdges] = useState(new Set());
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimationComplete(true), 2000);
+    
+    // Highlight animation sequence
+    graphData.nodes_added.forEach((node, idx) => {
+      setTimeout(() => {
+        setHighlightedNodes(prev => new Set([...prev, node.id]));
+      }, idx * 200);
+    });
+
+    graphData.relationships.forEach((rel, idx) => {
+      setTimeout(() => {
+        setHighlightedEdges(prev => new Set([...prev, idx]));
+      }, (graphData.nodes_added.length * 200) + (idx * 150));
+    });
+
     return () => clearTimeout(timer);
-  }, []);
+  }, [graphData]);
 
   const entityColorMap = {
     'PERSON': '#2563eb',
@@ -1712,40 +1775,25 @@ function GraphVisualization({ graphData }) {
 
   return (
     <div className="results-card graph-updates-card">
-      <h3 className="results-title">
-        <Network size={20} style={{ marginRight: '8px' }} />
+      <h3 className="results-title-graph">
+        <Network size={22} style={{ marginRight: '10px' }} />
         Knowledge Graph Updates
       </h3>
       <div className="graph-updates-content">
-        <div className="graph-update-stats">
-          <div className="update-stat">
-            <TrendingUp size={18} />
-            <span className="stat-number">{graphData.nodes_added.length}</span>
-            <span className="stat-text">Nodes Added</span>
-          </div>
-          <div className="update-stat">
-            <GitBranch size={18} />
-            <span className="stat-number">{graphData.relationships_added}</span>
-            <span className="stat-text">Relationships</span>
-          </div>
-          <div className="update-stat">
-            <Edit3 size={18} />
-            <span className="stat-number">{graphData.properties_updated}</span>
-            <span className="stat-text">Properties</span>
-          </div>
-          <div className="update-stat">
-            <Database size={18} />
-            <span className="stat-number">{graphData.existing_nodes_updated}</span>
-            <span className="stat-text">Nodes Updated</span>
-          </div>
-        </div>
         
         {/* Graph Visualization */}
         <div className="graph-visualization-container">
-          <svg className="graph-svg" viewBox="0 0 800 500">
+          <svg className="graph-svg" viewBox="0 0 800 550">
             <defs>
               <filter id="glow">
-                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+              <filter id="highlight-glow">
+                <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
                 <feMerge>
                   <feMergeNode in="coloredBlur"/>
                   <feMergeNode in="SourceGraphic"/>
@@ -1764,9 +1812,11 @@ function GraphVisualization({ graphData }) {
               const toIdx = graphData.nodes_added.indexOf(toNode);
               
               const fromX = 150 + (fromIdx % 4) * 160;
-              const fromY = 100 + Math.floor(fromIdx / 4) * 120;
+              const fromY = 100 + Math.floor(fromIdx / 4) * 130;
               const toX = 150 + (toIdx % 4) * 160;
-              const toY = 100 + Math.floor(toIdx / 4) * 120;
+              const toY = 100 + Math.floor(toIdx / 4) * 130;
+              
+              const isHighlighted = highlightedEdges.has(idx);
               
               return (
                 <g key={`edge-${idx}`}>
@@ -1775,21 +1825,23 @@ function GraphVisualization({ graphData }) {
                     y1={fromY}
                     x2={toX}
                     y2={toY}
-                    stroke="#94a3b8"
-                    strokeWidth="2"
-                    opacity={animationComplete ? "0.5" : "0"}
+                    stroke={isHighlighted ? "#60a5fa" : "#475569"}
+                    strokeWidth={isHighlighted ? "3" : "2"}
+                    opacity={isHighlighted ? "0.9" : "0.4"}
                     className="graph-edge"
                     style={{
-                      animation: `fadeIn 0.5s ease-in-out ${idx * 0.15}s forwards`
+                      animation: `fadeIn 0.5s ease-in-out ${idx * 0.15}s forwards`,
+                      filter: isHighlighted ? "url(#highlight-glow)" : "none"
                     }}
                   />
                   <text
                     x={(fromX + toX) / 2}
                     y={(fromY + toY) / 2 - 5}
                     fontSize="10"
-                    fill="#64748b"
+                    fill={isHighlighted ? "#93c5fd" : "#64748b"}
                     textAnchor="middle"
-                    opacity={animationComplete ? "0.7" : "0"}
+                    opacity={animationComplete ? "0.8" : "0"}
+                    fontWeight={isHighlighted ? "700" : "500"}
                     style={{
                       animation: `fadeIn 0.5s ease-in-out ${idx * 0.15 + 0.3}s forwards`
                     }}
@@ -1803,40 +1855,48 @@ function GraphVisualization({ graphData }) {
             {/* Nodes */}
             {graphData.nodes_added.map((node, idx) => {
               const x = 150 + (idx % 4) * 160;
-              const y = 100 + Math.floor(idx / 4) * 120;
+              const y = 100 + Math.floor(idx / 4) * 130;
               const color = entityColorMap[node.type];
+              const isHighlighted = highlightedNodes.has(node.id);
               
               return (
                 <g key={node.id} className="graph-node">
+                  {/* Outer highlight ring */}
+                  {isHighlighted && (
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="42"
+                      fill="none"
+                      stroke={color}
+                      strokeWidth="3"
+                      opacity="0"
+                      className="node-highlight-ring"
+                      style={{
+                        animation: `highlightPulse 2s ease-out ${idx * 0.1}s forwards`
+                      }}
+                    />
+                  )}
+                  
+                  {/* Main node circle */}
                   <circle
                     cx={x}
                     cy={y}
                     r="0"
                     fill={color}
-                    filter="url(#glow)"
+                    filter={isHighlighted ? "url(#highlight-glow)" : "url(#glow)"}
                     className="node-circle-new"
                     style={{
                       animation: `nodeAppear 0.6s ease-out ${idx * 0.1}s forwards`
                     }}
                   />
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r="35"
-                    fill="none"
-                    stroke={color}
-                    strokeWidth="2"
-                    opacity="0"
-                    className="node-ring"
-                    style={{
-                      animation: `ringPulse 1.5s ease-out ${idx * 0.1}s forwards`
-                    }}
-                  />
+                  
+                  {/* Node label */}
                   <text
                     x={x}
                     y={y + 5}
                     fontSize="11"
-                    fontWeight="600"
+                    fontWeight="700"
                     fill="white"
                     textAnchor="middle"
                     opacity="0"
@@ -1846,11 +1906,14 @@ function GraphVisualization({ graphData }) {
                   >
                     {node.label.length > 15 ? node.label.substring(0, 13) + '...' : node.label}
                   </text>
+                  
+                  {/* Node type label */}
                   <text
                     x={x}
-                    y={y + 50}
+                    y={y + 52}
                     fontSize="9"
-                    fill="#64748b"
+                    fontWeight="600"
+                    fill="#cbd5e1"
                     textAnchor="middle"
                     opacity="0"
                     style={{
@@ -1866,15 +1929,18 @@ function GraphVisualization({ graphData }) {
         </div>
 
         <div className="graph-legend">
-          <h4>Graph Legend:</h4>
           <div className="legend-items">
             <div className="legend-item">
               <div className="legend-circle-new"></div>
-              <span>New nodes added from this email</span>
+              <span>New nodes from this email</span>
             </div>
             <div className="legend-item">
               <div className="legend-line"></div>
               <span>Relationships between entities</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-highlight"></div>
+              <span>Recently added / highlighted</span>
             </div>
           </div>
         </div>
@@ -1887,23 +1953,27 @@ function GraphVisualization({ graphData }) {
             opacity: 0;
           }
           50% {
-            r: 35;
-            opacity: 0.8;
+            r: 36;
+            opacity: 0.9;
           }
           100% {
-            r: 30;
+            r: 32;
             opacity: 1;
           }
         }
 
-        @keyframes ringPulse {
+        @keyframes highlightPulse {
           0% {
-            r: 30;
-            opacity: 0.8;
-            stroke-width: 2;
+            r: 32;
+            opacity: 0.9;
+            stroke-width: 3;
+          }
+          50% {
+            r: 55;
+            opacity: 0.5;
           }
           100% {
-            r: 50;
+            r: 70;
             opacity: 0;
             stroke-width: 1;
           }
@@ -1918,58 +1988,89 @@ function GraphVisualization({ graphData }) {
           }
         }
 
+        .results-title-graph {
+          font-family: 'Space Mono', 'Courier New', monospace;
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: #e2e8f0;
+          margin: 0 0 1.5rem 0;
+          display: flex;
+          align-items: center;
+          letter-spacing: -0.02em;
+        }
+
         .graph-visualization-container {
-          margin: 2rem 0;
+          margin: 1.5rem 0;
           background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-          border-radius: 12px;
-          padding: 1.5rem;
+          border-radius: 16px;
+          padding: 2rem;
           border: 1px solid #334155;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         .graph-svg {
           width: 100%;
           height: auto;
-          min-height: 500px;
+          min-height: 550px;
         }
 
         .graph-legend {
           margin-top: 1.5rem;
-          padding-top: 1.5rem;
-          border-top: 1px solid #334155;
-        }
-
-        .graph-legend h4 {
-          color: #e2e8f0;
-          font-size: 0.95rem;
-          margin-bottom: 0.75rem;
+          padding: 1.25rem;
+          background: rgba(30, 41, 59, 0.6);
+          border-radius: 10px;
+          border: 1px solid rgba(71, 85, 105, 0.5);
         }
 
         .legend-items {
           display: flex;
-          gap: 2rem;
+          gap: 2.5rem;
           flex-wrap: wrap;
+          justify-content: center;
         }
 
         .legend-item {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          color: #94a3b8;
-          font-size: 0.875rem;
+          gap: 0.75rem;
+          color: #cbd5e1;
+          font-size: 0.9rem;
+          font-weight: 500;
         }
 
         .legend-circle-new {
-          width: 16px;
-          height: 16px;
+          width: 18px;
+          height: 18px;
           border-radius: 50%;
           background: #2563eb;
-          box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+          box-shadow: 0 0 12px rgba(37, 99, 235, 0.6);
         }
 
         .legend-line {
-          width: 30px;
-          height: 2px;
-          background: #94a3b8;
+          width: 36px;
+          height: 3px;
+          background: #60a5fa;
+          box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+        }
+
+        .legend-highlight {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: radial-gradient(circle, #60a5fa 0%, #2563eb 70%);
+          box-shadow: 0 0 16px rgba(96, 165, 250, 0.8);
+          animation: legendPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes legendPulse {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.7;
+            transform: scale(1.15);
+          }
         }
       `}</style>
     </div>

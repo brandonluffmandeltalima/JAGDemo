@@ -360,7 +360,7 @@ const generateSummary = (entities, relationships) => {
           <div className="step-icon spacy-step">
             <GitBranch />
           </div>
-          <h3 className="step-title">Spacy NER</h3>
+          <h3 className="step-title">Named Entity Recognition</h3>
           <p className="step-description">Extract entities, relationships, and legal references</p>
         </div>
 
