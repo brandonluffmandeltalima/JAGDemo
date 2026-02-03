@@ -563,7 +563,6 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
 
   return entities.filter(e => e.start !== -1);
 };
-
 // Helper function to create annotated text with highlights
 const createAnnotatedText = (text, entities) => {
   if (!entities || entities.length === 0) return text;
@@ -583,6 +582,7 @@ const createAnnotatedText = (text, entities) => {
   let lastIndex = 0;
 
   nonOverlappingEntities.forEach((entity, idx) => {
+    // Add text before entity
     if (entity.start > lastIndex) {
       result.push(text.substring(lastIndex, entity.start));
     }
@@ -591,6 +591,7 @@ const createAnnotatedText = (text, entities) => {
       ? `${entity.type} → ${entity.refers_to}` 
       : entity.type;
 
+    // Wrap entity text + label together
     result.push(
       <span
         key={`entity-${idx}`}
@@ -598,28 +599,28 @@ const createAnnotatedText = (text, entities) => {
         style={{ 
           backgroundColor: `${entity.color}15`,
           borderBottom: `2px solid ${entity.color}`,
-          position: 'relative',
           padding: '2px 4px',
-          margin: '0 1px',
-          display: 'inline-block',
-          lineHeight: '1.8',
-          cursor: 'pointer'
+          margin: '0 2px',
+          display: 'inline',
+          cursor: 'pointer',
+          whiteSpace: 'nowrap' // ADDED: Keep entity + label together
         }}
         title={entity.properties ? JSON.stringify(entity.properties, null, 2) : ''}
       >
-        {text.substring(entity.start, entity.end)}
+        <span style={{ whiteSpace: 'normal' }}>{text.substring(entity.start, entity.end)}</span>
         <span
           className="entity-label"
           style={{
             backgroundColor: entity.color,
             color: 'white',
-            padding: '2px 6px',
+            padding: '2px 5px',
             borderRadius: '3px',
             marginLeft: '4px',
-            fontSize: '0.7rem',
-            fontWeight: '600',
+            fontSize: '0.65rem',
+            fontWeight: '700',
             whiteSpace: 'nowrap',
-            verticalAlign: 'baseline'
+            verticalAlign: 'baseline',
+            display: 'inline-block'
           }}
         >
           {labelText}
@@ -630,6 +631,7 @@ const createAnnotatedText = (text, entities) => {
     lastIndex = entity.end;
   });
 
+  // Add remaining text
   if (lastIndex < text.length) {
     result.push(text.substring(lastIndex));
   }
@@ -681,7 +683,10 @@ Damages likely limited due to recovery and return to work.
 
 Early settlement discussions recommended in the low-to-mid five-figure range, pending DPW document review.
 
-Coordination with DPW and USARCS advised to assess settlement authority.`;
+Coordination with DPW and USARCS advised to assess settlement authority.
+
+Have a great week!
+JAGBot`;
   
   let index = 0;
   setTypedSummary('');
@@ -811,7 +816,39 @@ const handleProcessEmail = async () => {
   setResults(prev => ({
     ...prev,
     relationships: relationships,
-    summary: `New case development:\n Staff Sergeant Michael A. Reynolds has been charged with Article 92, UCMJ (Failure to Obey a Lawful Order) in Case No. 24-MJ-117. Defense counsel John Smith has been retained and has filed a formal notice of representation. An Article 32 preliminary hearing is scheduled for 10 January 2025 at Fort Liberty. The incident allegedly occurred on 14 March 2024 at Smoke Bomb Hill Training Area. CID Special Agent Laura M. Bennett is conducting the investigation. The defense has filed a preservation of evidence demand covering all documents, communications, and materials from 1 February 2024 through present. Key evidence includes charge sheet, witness statements, unit policies, command directives, duty rosters, operational emails, and training directives. The defense maintains SSG Reynolds' innocence and has reserved all rights and appellate remedies.`
+    summary: (
+  <>
+    <p>Good afternoon CPT Smith,</p>
+
+    <p>Below is your weekly litigation update for matters within your portfolio:</p>
+
+    <p><strong>United States v. Reynolds (UCMJ – Art. 92)</strong></p>
+    <p>
+      Defense counsel entered representation and issued a formal evidence preservation
+      demand covering unit taskings, command communications, and CID materials.
+    </p>
+    <p>
+      Article 32 hearing remains scheduled for 10 January 2025 at Fort Liberty.
+      No continuance requests noted.
+    </p>
+    <p>
+      Defense is signaling potential discovery and preservation challenges tied to
+      Feb–Mar 2024 unit directives.
+    </p>
+
+    <p><strong>Action Items:</strong></p>
+
+    <p>
+      Ensure responsive unit records and command communications are preserved and
+      coordinated with CID ahead of the Article 32.
+    </p>
+
+    <p>
+      Respectfully,<br />
+      JAG Bot
+    </p>
+  </>
+)
   }));
   
   setPipelineStep('summary');
@@ -1113,8 +1150,7 @@ const handleBatchProcess = async () => {
             </div>
           </div>
 
-          {/* Entity Types Display */}
-          <div className="entity-types-display">
+          {/* <div className="entity-types-display">
             <h4 className="entity-types-title">
               <Network size={16} style={{ marginRight: '8px' }} />
               Extracting Entity Types
@@ -1126,15 +1162,12 @@ const handleBatchProcess = async () => {
                   className="entity-type-badge"
                   style={{ backgroundColor: entityColorMap[type] }}
                 >
-                  {/* <span 
-                    className="entity-type-dot" 
-                    style={{ backgroundColor: entityColorMap[type] }}
-                  ></span> */}
+       
                   {type}
                 </span>
               ))}
             </div>
-          </div>
+          </div> */}
 
           {/* Mode Toggle */}
           <div className="mode-toggle-container">
@@ -1384,7 +1417,7 @@ const handleBatchProcess = async () => {
                             <div className="batch-email-body-section">
                               <strong>Email Preview:</strong>
                               <div className="email-body-annotated">
-                                {createAnnotatedText(result.body, result.entities)}
+                                {createAnnotatedText(result.fullText, result.entities)}
                               </div>
                             </div>
                           )}
@@ -1678,7 +1711,7 @@ const handleBatchProcess = async () => {
                           <span className="rel-arrow">→</span>
                           <span className="rel-node">{rel.to}</span>
                         </div>
-                        {rel.properties && Object.keys(rel.properties).length > 0 && (
+                        {/* {rel.properties && Object.keys(rel.properties).length > 0 && (
                           <div className="relationship-properties">
                             {Object.entries(rel.properties).map(([key, value], pidx) => (
                               <span key={pidx} className="rel-prop">
@@ -1686,7 +1719,7 @@ const handleBatchProcess = async () => {
                               </span>
                             ))}
                           </div>
-                        )}
+                        )} */}
                       </div>
                     ))}
                   </div>
@@ -1756,21 +1789,42 @@ function GraphVisualization({ graphData }) {
   }, [graphData]);
 
   const entityColorMap = {
-    'PERSON': '#2563eb',
-    'LOCATION': '#059669',
-    'DATE': '#7c3aed',
-    'CASE': '#dc2626',
-    'COURT': '#be185d',
-    'JUDGE': '#0891b2',
-    'MOTION': '#d97706',
-    'HEARING': '#db2777',
-    'PARTY_ENTITY': '#0d9488',
-    'STATUTE': '#ea580c',
-    'LEGAL_ISSUE': '#9333ea',
-    'PRECEDENT': '#65a30d',
-    'CONTRACT': '#4f46e5',
-    'CLAUSE': '#57534e',
-    'EVIDENCE': '#0284c7'
+    'PERSON': { primary: '#3b82f6', secondary: '#1e40af', glow: '#60a5fa' },
+    'LOCATION': { primary: '#10b981', secondary: '#047857', glow: '#34d399' },
+    'DATE': { primary: '#8b5cf6', secondary: '#6d28d9', glow: '#a78bfa' },
+    'CASE': { primary: '#ef4444', secondary: '#b91c1c', glow: '#f87171' },
+    'COURT': { primary: '#ec4899', secondary: '#be185d', glow: '#f472b6' },
+    'JUDGE': { primary: '#06b6d4', secondary: '#0e7490', glow: '#22d3ee' },
+    'MOTION': { primary: '#f59e0b', secondary: '#d97706', glow: '#fbbf24' },
+    'HEARING': { primary: '#f43f5e', secondary: '#be123c', glow: '#fb7185' },
+    'PARTY_ENTITY': { primary: '#14b8a6', secondary: '#0f766e', glow: '#2dd4bf' },
+    'STATUTE': { primary: '#f97316', secondary: '#c2410c', glow: '#fb923c' },
+    'LEGAL_ISSUE': { primary: '#a855f7', secondary: '#7e22ce', glow: '#c084fc' },
+    'PRECEDENT': { primary: '#84cc16', secondary: '#65a30d', glow: '#a3e635' },
+    'CONTRACT': { primary: '#6366f1', secondary: '#4338ca', glow: '#818cf8' },
+    'CLAUSE': { primary: '#78716c', secondary: '#57534e', glow: '#a8a29e' },
+    'EVIDENCE': { primary: '#0ea5e9', secondary: '#0369a1', glow: '#38bdf8' }
+  };
+
+  // Calculate node positions with organic spacing
+  const getNodePosition = (idx, total) => {
+    const cols = Math.min(5, Math.ceil(Math.sqrt(total * 1.5)));
+    const nodeSpacingX = 200;
+    const nodeSpacingY = 180;
+    const startX = 150;
+    const startY = 140;
+    
+    const col = idx % cols;
+    const row = Math.floor(idx / cols);
+    
+    // Add slight organic offset
+    const organicOffsetX = (Math.sin(idx * 0.5) * 15);
+    const organicOffsetY = (Math.cos(idx * 0.7) * 15);
+    
+    return {
+      x: startX + col * nodeSpacingX + organicOffsetX,
+      y: startY + row * nodeSpacingY + organicOffsetY
+    };
   };
 
   return (
@@ -1783,166 +1837,328 @@ function GraphVisualization({ graphData }) {
         
         {/* Graph Visualization */}
         <div className="graph-visualization-container">
-          <svg className="graph-svg" viewBox="0 0 800 550">
+          <svg className="graph-svg" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
             <defs>
-              <filter id="glow">
+              {/* Advanced gradient definitions */}
+              <radialGradient id="nodeGradient" cx="30%" cy="30%">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.3)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </radialGradient>
+              
+              {/* Glow filters */}
+              <filter id="softGlow" x="-150%" y="-150%" width="400%" height="400%">
+                <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+                <feComposite in="coloredBlur" in2="SourceAlpha" operator="in" result="softGlow"/>
+                <feMerge>
+                  <feMergeNode in="softGlow"/>
+                  <feMergeNode in="softGlow"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+              
+              <filter id="highlightGlow" x="-200%" y="-200%" width="500%" height="500%">
+                <feGaussianBlur stdDeviation="15" result="coloredBlur"/>
+                <feComposite in="coloredBlur" in2="SourceAlpha" operator="in" result="softGlow"/>
+                <feMerge>
+                  <feMergeNode in="softGlow"/>
+                  <feMergeNode in="softGlow"/>
+                  <feMergeNode in="softGlow"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+              
+              <filter id="edgeGlow" x="-200%" y="-200%" width="500%" height="500%">
                 <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
                 <feMerge>
                   <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-              <filter id="highlight-glow">
-                <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
-                <feMerge>
                   <feMergeNode in="coloredBlur"/>
                   <feMergeNode in="SourceGraphic"/>
                 </feMerge>
               </filter>
+
+              {/* Drop shadow for depth */}
+              <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                <feOffset dx="0" dy="2" result="offsetblur"/>
+                <feComponentTransfer>
+                  <feFuncA type="linear" slope="0.5"/>
+                </feComponentTransfer>
+                <feMerge>
+                  <feMergeNode/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+
+              {/* Animated pulse for highlighted nodes */}
+              <radialGradient id="pulseGradient">
+                <stop offset="0%" stopColor="rgba(96, 165, 250, 0.8)">
+                  <animate attributeName="stop-opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
+                </stop>
+                <stop offset="100%" stopColor="rgba(96, 165, 250, 0)">
+                  <animate attributeName="stop-opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
+                </stop>
+              </radialGradient>
             </defs>
             
-            {/* Relationships (edges) */}
-            {graphData.relationships.map((rel, idx) => {
-              const fromNode = graphData.nodes_added.find(n => n.label.includes(rel.from.split(' ')[0]) || rel.from.includes(n.label.split(' ')[0]));
-              const toNode = graphData.nodes_added.find(n => n.label.includes(rel.to.split(' ')[0]) || rel.to.includes(n.label.split(' ')[0]));
-              
-              if (!fromNode || !toNode) return null;
-              
-              const fromIdx = graphData.nodes_added.indexOf(fromNode);
-              const toIdx = graphData.nodes_added.indexOf(toNode);
-              
-              const fromX = 150 + (fromIdx % 4) * 160;
-              const fromY = 100 + Math.floor(fromIdx / 4) * 130;
-              const toX = 150 + (toIdx % 4) * 160;
-              const toY = 100 + Math.floor(toIdx / 4) * 130;
-              
-              const isHighlighted = highlightedEdges.has(idx);
-              
-              return (
-                <g key={`edge-${idx}`}>
-                  <line
-                    x1={fromX}
-                    y1={fromY}
-                    x2={toX}
-                    y2={toY}
-                    stroke={isHighlighted ? "#60a5fa" : "#475569"}
-                    strokeWidth={isHighlighted ? "3" : "2"}
-                    opacity={isHighlighted ? "0.9" : "0.4"}
-                    className="graph-edge"
-                    style={{
-                      animation: `fadeIn 0.5s ease-in-out ${idx * 0.15}s forwards`,
-                      filter: isHighlighted ? "url(#highlight-glow)" : "none"
-                    }}
-                  />
-                  <text
-                    x={(fromX + toX) / 2}
-                    y={(fromY + toY) / 2 - 5}
-                    fontSize="10"
-                    fill={isHighlighted ? "#93c5fd" : "#64748b"}
-                    textAnchor="middle"
-                    opacity={animationComplete ? "0.8" : "0"}
-                    fontWeight={isHighlighted ? "700" : "500"}
-                    style={{
-                      animation: `fadeIn 0.5s ease-in-out ${idx * 0.15 + 0.3}s forwards`
-                    }}
-                  >
-                    {rel.relation}
-                  </text>
-                </g>
-              );
-            })}
+            {/* Background grid pattern for depth */}
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(100, 116, 139, 0.1)" strokeWidth="0.5"/>
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#grid)" opacity="0.3"/>
             
-            {/* Nodes */}
-            {graphData.nodes_added.map((node, idx) => {
-              const x = 150 + (idx % 4) * 160;
-              const y = 100 + Math.floor(idx / 4) * 130;
-              const color = entityColorMap[node.type];
-              const isHighlighted = highlightedNodes.has(node.id);
-              
-              return (
-                <g key={node.id} className="graph-node">
-                  {/* Outer highlight ring */}
-                  {isHighlighted && (
-                    <circle
-                      cx={x}
-                      cy={y}
-                      r="42"
+            {/* Relationships (edges) */}
+            <g className="edges-layer">
+              {graphData.relationships.map((rel, idx) => {
+                const fromNode = graphData.nodes_added.find(n => 
+                  n.label.toLowerCase().includes(rel.from.toLowerCase().split(' ')[0]) || 
+                  rel.from.toLowerCase().includes(n.label.toLowerCase().split(' ')[0])
+                );
+                const toNode = graphData.nodes_added.find(n => 
+                  n.label.toLowerCase().includes(rel.to.toLowerCase().split(' ')[0]) || 
+                  rel.to.toLowerCase().includes(n.label.toLowerCase().split(' ')[0])
+                );
+                
+                if (!fromNode || !toNode) return null;
+                
+                const fromIdx = graphData.nodes_added.indexOf(fromNode);
+                const toIdx = graphData.nodes_added.indexOf(toNode);
+                
+                const fromPos = getNodePosition(fromIdx, graphData.nodes_added.length);
+                const toPos = getNodePosition(toIdx, graphData.nodes_added.length);
+                
+                const isHighlighted = highlightedEdges.has(idx);
+                
+                // Calculate control points for curved edges
+                const dx = toPos.x - fromPos.x;
+                const dy = toPos.y - fromPos.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const curvature = Math.min(distance * 0.2, 50);
+                
+                const midX = (fromPos.x + toPos.x) / 2;
+                const midY = (fromPos.y + toPos.y) / 2;
+                
+                // Perpendicular offset for curve
+                const offsetX = -dy / distance * curvature;
+                const offsetY = dx / distance * curvature;
+                
+                const controlX = midX + offsetX;
+                const controlY = midY + offsetY;
+                
+                // Calculate label position on curve
+                const t = 0.5;
+                const labelX = (1-t)*(1-t)*fromPos.x + 2*(1-t)*t*controlX + t*t*toPos.x;
+                const labelY = (1-t)*(1-t)*fromPos.y + 2*(1-t)*t*controlY + t*t*toPos.y;
+                
+                // Calculate proper text width
+                const relationText = rel.relation.toUpperCase();
+                const textWidth = Math.max(relationText.length * 7, 60);
+                
+                return (
+                  <g key={`edge-${idx}`}>
+                    {/* Curved edge path */}
+                    <path
+                      d={`M ${fromPos.x} ${fromPos.y} Q ${controlX} ${controlY} ${toPos.x} ${toPos.y}`}
+                      stroke={isHighlighted ? "#60a5fa" : "#475569"}
+                      strokeWidth={isHighlighted ? "2.5" : "1.5"}
                       fill="none"
-                      stroke={color}
-                      strokeWidth="3"
-                      opacity="0"
-                      className="node-highlight-ring"
+                      opacity={isHighlighted ? "0.95" : "0.35"}
+                      className="graph-edge"
+                      filter={isHighlighted ? "url(#edgeGlow)" : "none"}
+                      strokeDasharray={isHighlighted ? "none" : "5,5"}
                       style={{
-                        animation: `highlightPulse 2s ease-out ${idx * 0.1}s forwards`
+                        animation: `edgeDraw 0.8s ease-out ${idx * 0.12}s forwards`,
+                        strokeDashoffset: distance * 2
                       }}
                     />
-                  )}
-                  
-                  {/* Main node circle */}
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r="0"
-                    fill={color}
-                    filter={isHighlighted ? "url(#highlight-glow)" : "url(#glow)"}
-                    className="node-circle-new"
-                    style={{
-                      animation: `nodeAppear 0.6s ease-out ${idx * 0.1}s forwards`
-                    }}
-                  />
-                  
-                  {/* Node label */}
-                  <text
-                    x={x}
-                    y={y + 5}
-                    fontSize="11"
-                    fontWeight="700"
-                    fill="white"
-                    textAnchor="middle"
-                    opacity="0"
-                    style={{
-                      animation: `fadeIn 0.4s ease-in ${idx * 0.1 + 0.3}s forwards`
-                    }}
-                  >
-                    {node.label.length > 15 ? node.label.substring(0, 13) + '...' : node.label}
-                  </text>
-                  
-                  {/* Node type label */}
-                  <text
-                    x={x}
-                    y={y + 52}
-                    fontSize="9"
-                    fontWeight="600"
-                    fill="#cbd5e1"
-                    textAnchor="middle"
-                    opacity="0"
-                    style={{
-                      animation: `fadeIn 0.4s ease-in ${idx * 0.1 + 0.4}s forwards`
-                    }}
-                  >
-                    {node.type}
-                  </text>
-                </g>
-              );
-            })}
+                    
+                    {/* Direction arrow */}
+                    {isHighlighted && (
+                      <polygon
+                        points="0,-4 8,0 0,4"
+                        fill="#60a5fa"
+                        opacity="0.8"
+                        transform={`translate(${toPos.x - dx/distance * 45}, ${toPos.y - dy/distance * 45}) rotate(${Math.atan2(dy, dx) * 180 / Math.PI})`}
+                        style={{
+                          animation: `fadeIn 0.4s ease-in ${idx * 0.15 + 0.5}s forwards`,
+                          opacity: 0
+                        }}
+                      />
+                    )}
+                    
+                    {/* Edge label */}
+                    {animationComplete && (
+                      <g 
+                        opacity="0" 
+                        style={{ 
+                          animation: `fadeIn 0.5s ease-in-out ${idx * 0.15 + 0.4}s forwards` 
+                        }}
+                      >
+                        <rect
+                          x={labelX - textWidth/2}
+                          y={labelY - 11}
+                          width={textWidth}
+                          height="22"
+                          fill="#0f172a"
+                          opacity="0.95"
+                          rx="6"
+                          stroke={isHighlighted ? "#60a5fa" : "#334155"}
+                          strokeWidth="1.5"
+                          filter="url(#dropShadow)"
+                        />
+                        <text
+                          x={labelX}
+                          y={labelY + 1}
+                          fontSize="10"
+                          fill={isHighlighted ? "#93c5fd" : "#94a3b8"}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontWeight={isHighlighted ? "700" : "600"}
+                          letterSpacing="0.3"
+                        >
+                          {relationText}
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                );
+              })}
+            </g>
+            
+            {/* Nodes */}
+            <g className="nodes-layer">
+              {graphData.nodes_added.map((node, idx) => {
+                const pos = getNodePosition(idx, graphData.nodes_added.length);
+                const colors = entityColorMap[node.type] || entityColorMap['PERSON'];
+                const isHighlighted = highlightedNodes.has(node.id);
+                
+                return (
+                  <g key={node.id} className="graph-node">
+                    {/* Outer pulse ring for highlighted nodes */}
+                    {isHighlighted && (
+                      <>
+                        <circle
+                          cx={pos.x}
+                          cy={pos.y}
+                          r="0"
+                          fill="url(#pulseGradient)"
+                          opacity="0.6"
+                          style={{
+                            animation: `pulseRing 2s ease-out ${idx * 0.1}s infinite`
+                          }}
+                        />
+                        <circle
+                          cx={pos.x}
+                          cy={pos.y}
+                          r="45"
+                          fill="none"
+                          stroke={colors.glow}
+                          strokeWidth="2"
+                          opacity="0"
+                          style={{
+                            animation: `rippleOut 2s ease-out ${idx * 0.1}s forwards`
+                          }}
+                        />
+                      </>
+                    )}
+                    
+                    {/* Node shadow circle */}
+                    <circle
+                      cx={pos.x}
+                      cy={pos.y + 4}
+                      r="0"
+                      fill="rgba(0, 0, 0, 0.3)"
+                      filter="url(#softGlow)"
+                      style={{
+                        animation: `nodeAppear 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${idx * 0.08}s forwards`
+                      }}
+                    />
+                    
+                    {/* Main node outer ring */}
+                    <circle
+                      cx={pos.x}
+                      cy={pos.y}
+                      r="0"
+                      fill="none"
+                      stroke={colors.primary}
+                      strokeWidth="3"
+                      opacity="0.4"
+                      style={{
+                        animation: `nodeAppear 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${idx * 0.08}s forwards`
+                      }}
+                    />
+                    
+                    {/* Main node circle with gradient */}
+                    <circle
+                      cx={pos.x}
+                      cy={pos.y}
+                      r="0"
+                      fill={colors.primary}
+                      filter={isHighlighted ? "url(#highlightGlow)" : "url(#softGlow)"}
+                      style={{
+                        animation: `nodeAppear 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${idx * 0.08}s forwards`
+                      }}
+                    />
+                    
+                    {/* Inner gradient overlay */}
+                    <circle
+                      cx={pos.x}
+                      cy={pos.y}
+                      r="0"
+                      fill="url(#nodeGradient)"
+                      style={{
+                        animation: `nodeAppear 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${idx * 0.08 + 0.1}s forwards`
+                      }}
+                    />
+                    
+                    {/* Node label */}
+                    <text
+                      x={pos.x}
+                      y={pos.y + 1}
+                      fontSize="13"
+                      fontWeight="800"
+                      fill="white"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      opacity="0"
+                      letterSpacing="-0.3"
+                      style={{
+                        animation: `fadeIn 0.5s ease-out ${idx * 0.08 + 0.35}s forwards`,
+                        filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.7))'
+                      }}
+                    >
+                      {node.label.length > 11 ? node.label.substring(0, 9) + '…' : node.label}
+                    </text>
+                    
+                    {/* Type badge below node */}
+                    <g opacity="0" style={{ animation: `fadeIn 0.5s ease-out ${idx * 0.08 + 0.45}s forwards` }}>
+                      <rect
+                        x={pos.x - 35}
+                        y={pos.y + 50}
+                        width="70"
+                        height="20"
+                        fill={colors.secondary}
+                        opacity="0.85"
+                        rx="10"
+                        filter="url(#dropShadow)"
+                      />
+                      <text
+                        x={pos.x}
+                        y={pos.y + 60}
+                        fontSize="9"
+                        fontWeight="700"
+                        fill="#e2e8f0"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        letterSpacing="0.5"
+                      >
+                        {node.type}
+                      </text>
+                    </g>
+                  </g>
+                );
+              })}
+            </g>
           </svg>
-        </div>
-
-        <div className="graph-legend">
-          <div className="legend-items">
-            <div className="legend-item">
-              <div className="legend-circle-new"></div>
-              <span>New nodes from this email</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-line"></div>
-              <span>Relationships between entities</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-highlight"></div>
-              <span>Recently added / highlighted</span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -1952,30 +2168,48 @@ function GraphVisualization({ graphData }) {
             r: 0;
             opacity: 0;
           }
-          50% {
-            r: 36;
-            opacity: 0.9;
+          60% {
+            r: 42;
+            opacity: 1;
           }
           100% {
-            r: 32;
+            r: 38;
             opacity: 1;
           }
         }
 
-        @keyframes highlightPulse {
+        @keyframes pulseRing {
           0% {
-            r: 32;
-            opacity: 0.9;
-            stroke-width: 3;
-          }
-          50% {
-            r: 55;
-            opacity: 0.5;
+            r: 40;
+            opacity: 0.6;
           }
           100% {
-            r: 70;
+            r: 90;
             opacity: 0;
-            stroke-width: 1;
+          }
+        }
+
+        @keyframes rippleOut {
+          0% {
+            r: 45;
+            opacity: 0.8;
+            stroke-width: 2;
+          }
+          100% {
+            r: 100;
+            opacity: 0;
+            stroke-width: 0.5;
+          }
+        }
+
+        @keyframes edgeDraw {
+          from {
+            strokeDashoffset: 2000;
+            opacity: 0;
+          }
+          to {
+            strokeDashoffset: 0;
+            opacity: 1;
           }
         }
 
@@ -1988,89 +2222,86 @@ function GraphVisualization({ graphData }) {
           }
         }
 
+        .results-card {
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+          border-radius: 24px;
+          padding: 2.5rem;
+          border: 1px solid #334155;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(148, 163, 184, 0.1) inset;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .results-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3), transparent);
+        }
+
         .results-title-graph {
-          font-family: 'Space Mono', 'Courier New', monospace;
-          font-size: 1.3rem;
-          font-weight: 700;
-          color: #e2e8f0;
-          margin: 0 0 1.5rem 0;
+          font-size: 1.4rem;
+          font-weight: 800;
+          background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin: 0 0 2rem 0;
           display: flex;
           align-items: center;
-          letter-spacing: -0.02em;
+          letter-spacing: -0.03em;
         }
 
         .graph-visualization-container {
-          margin: 1.5rem 0;
-          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-          border-radius: 16px;
-          padding: 2rem;
-          border: 1px solid #334155;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+          margin: 0;
+          background: radial-gradient(ellipse at top, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+          border-radius: 20px;
+          padding: 3rem 2rem;
+          border: 1px solid rgba(71, 85, 105, 0.5);
+          box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.5),
+            0 0 0 1px rgba(148, 163, 184, 0.05) inset;
+          position: relative;
+          overflow: visible;
+        }
+
+        .graph-visualization-container::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+          pointer-events: none;
+          border-radius: 20px;
         }
 
         .graph-svg {
           width: 100%;
           height: auto;
-          min-height: 550px;
+          overflow: visible;
         }
 
-        .graph-legend {
-          margin-top: 1.5rem;
-          padding: 1.25rem;
-          background: rgba(30, 41, 59, 0.6);
-          border-radius: 10px;
-          border: 1px solid rgba(71, 85, 105, 0.5);
+
+        .edges-layer {
+          pointer-events: none;
         }
 
-        .legend-items {
-          display: flex;
-          gap: 2.5rem;
-          flex-wrap: wrap;
-          justify-content: center;
+        .nodes-layer {
+          pointer-events: none;
         }
 
-        .legend-item {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          color: #cbd5e1;
-          font-size: 0.9rem;
-          font-weight: 500;
+        .graph-node {
+          pointer-events: none;
         }
 
-        .legend-circle-new {
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: #2563eb;
-          box-shadow: 0 0 12px rgba(37, 99, 235, 0.6);
-        }
-
-        .legend-line {
-          width: 36px;
-          height: 3px;
-          background: #60a5fa;
-          box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
-        }
-
-        .legend-highlight {
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: radial-gradient(circle, #60a5fa 0%, #2563eb 70%);
-          box-shadow: 0 0 16px rgba(96, 165, 250, 0.8);
-          animation: legendPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes legendPulse {
-          0%, 100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.7;
-            transform: scale(1.15);
-          }
+        .graph-edge {
+          transition: none;
         }
       `}</style>
     </div>

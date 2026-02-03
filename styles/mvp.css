@@ -864,7 +864,7 @@
 }
 
 /* Batch Email Body Section - FIXED ANNOTATIONS */
-.batch-email-body-section {
+/* .batch-email-body-section {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid rgba(71, 85, 105, 0.5);
@@ -908,7 +908,6 @@
   background: rgba(148, 163, 184, 0.7);
 }
 
-/* Fix annotation alignment in batch results */
 .email-body-annotated .annotated-entity {
   display: inline;
   line-height: 2;
@@ -920,7 +919,7 @@
   vertical-align: baseline;
   line-height: 1.2;
   margin-left: 3px;
-}
+} */
 
 /* ==========================================
    GRAPH CHANGES SECTIONS
@@ -1102,7 +1101,9 @@
 }
 
 .results-title-graph {
-  font-family: 'Space Mono', 'Courier New', monospace;
+  /* font-family: 'Space Mono', 'Courier New', monospace; */
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-family: inherit;
   font-size: 1.4rem;
   font-weight: 700;
   color: #e2e8f0;
@@ -1239,7 +1240,7 @@
 
 .summary-content {
   white-space: pre-line;
-  line-height: 1.7;
+  line-height: 1.1;
   color: #cbd5e1;
 }
 
@@ -1974,4 +1975,114 @@
   .graph-stats-grid {
     grid-template-columns: 1fr;
   }
+}
+
+
+
+
+/* ==========================================
+   BATCH EMAIL ANNOTATION FIX - CONSOLIDATED
+   ========================================== */
+
+/* Remove the old .batch-email-body-section and .email-body-annotated rules around line 658 */
+/* Remove the section at the bottom starting with "BATCH EMAIL ANNOTATION FIX - SEPARATE STYLES" */
+
+/* Batch Email Body Section */
+.batch-email-body-section {
+  margin-top: 12px;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 8px;
+  border: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.batch-email-body-section strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Batch-specific annotation container - HIGHER SPECIFICITY */
+.batch-result-card .batch-email-body-section .email-body-annotated {
+  background: #0f172a;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.7 !important;
+  color: #e2e8f0;
+  max-height: 250px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Force inline display for batch email entities - MOST SPECIFIC */
+.batch-result-card .batch-email-body-section .annotated-entity {
+  display: inline !important;
+  padding: 2px 4px !important;
+  margin: 0 2px !important;
+  line-height: inherit !important;
+  vertical-align: baseline !important;
+  border-radius: 3px !important;
+  white-space: normal !important;
+  position: static !important;
+}
+
+/* Fix entity labels in batch emails - MOST SPECIFIC */
+.batch-result-card .batch-email-body-section .entity-label {
+  display: inline-block !important;
+  margin-left: 4px !important;
+  padding: 2px 5px !important;
+  border-radius: 3px !important;
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  vertical-align: baseline !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+/* Scrollbar for batch email body */
+.batch-result-card .batch-email-body-section .email-body-annotated::-webkit-scrollbar {
+  width: 8px;
+}
+
+.batch-result-card .batch-email-body-section .email-body-annotated::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 4px;
+}
+
+.batch-result-card .batch-email-body-section .email-body-annotated::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+.batch-result-card .batch-email-body-section .email-body-annotated::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Scrollbar for email draft textarea */
+.email-textarea-draft::-webkit-scrollbar {
+  width: 8px;
+}
+
+.email-textarea-draft::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 4px;
+}
+
+.email-textarea-draft::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+.email-textarea-draft::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.email-textarea-draft {
+  resize: none;
 }

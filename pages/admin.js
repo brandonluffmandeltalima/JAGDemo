@@ -405,160 +405,259 @@ const generateSummary = (entities, relationships) => {
         </div>
       </div>
 
-      <div className="graph-visualization">
-        <h3 className="graph-title">
-          <Database size={24} />
-          Knowledge Graph - Sample Data
-        </h3>
-        <div className="graph-canvas">
-          <svg className="graph-svg" viewBox="0 0 1000 600">
-            <defs>
-              <marker id="arrowhead-admin" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                <polygon points="0 0, 10 3, 0 6" fill="#64748b" />
-              </marker>
-            </defs>
-            
-            {/* Connections */}
-            <line x1="200" y1="300" x2="350" y2="200" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrowhead-admin)" />
-            <line x1="200" y1="300" x2="350" y2="400" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrowhead-admin)" />
-            <line x1="420" y1="200" x2="550" y2="150" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrowhead-admin)" />
-            <line x1="420" y1="400" x2="550" y2="350" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrowhead-admin)" />
-            <line x1="620" y1="150" x2="750" y2="200" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrowhead-admin)" />
-            <line x1="620" y1="350" x2="750" y2="300" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrowhead-admin)" />
-            <line x1="200" y1="300" x2="350" y2="300" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrowhead-admin)" />
-            <line x1="420" y1="300" x2="550" y2="250" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrowhead-admin)" />
-            <line x1="820" y1="250" x2="750" y2="450" stroke="#64748b" strokeWidth="2" markerEnd="url(#arrowhead-admin)" />
-            
-            {/* Edge Labels */}
-            <text x="260" y="240" fill="#94a3b8" fontSize="11">STATIONED_AT</text>
-            <text x="260" y="360" fill="#94a3b8" fontSize="11">ASSIGNED_TO</text>
-            <text x="270" y="290" fill="#94a3b8" fontSize="11">REPORTS_TO</text>
-            <text x="470" y="170" fill="#94a3b8" fontSize="11">LOCATED_IN</text>
-            <text x="470" y="315" fill="#94a3b8" fontSize="11">INVOLVES</text>
-            <text x="670" y="170" fill="#94a3b8" fontSize="11">SUPERVISES</text>
-            <text x="480" y="240" fill="#94a3b8" fontSize="11">HEARING_AT</text>
-            
-            {/* Person Nodes */}
-            <circle cx="200" cy="300" r="45" fill="#3b82f6" className="graph-node" />
-            <text x="200" y="295" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">MAJ Sarah</text>
-            <text x="200" y="310" textAnchor="middle" fill="white" fontSize="10">Johnson</text>
-            
-            <circle cx="820" cy="250" r="45" fill="#3b82f6" className="graph-node" />
-            <text x="820" y="245" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">CPT John</text>
-            <text x="820" y="260" textAnchor="middle" fill="white" fontSize="10">Smith</text>
-            
-            <circle cx="385" cy="300" r="40" fill="#3b82f6" className="graph-node" />
-            <text x="385" y="295" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold">LTC Maria</text>
-            <text x="385" y="308" textAnchor="middle" fill="white" fontSize="9">Garcia</text>
-            
-            {/* Location Nodes */}
-            <circle cx="385" cy="200" r="40" fill="#10b981" className="graph-node" />
-            <text x="385" y="200" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold">Fort Bragg</text>
-            
-            <circle cx="585" cy="150" r="35" fill="#10b981" className="graph-node" />
-            <text x="585" y="150" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">NC</text>
-            
-            {/* Legal/Case Nodes */}
-            <circle cx="385" cy="400" r="40" fill="#f59e0b" className="graph-node" />
-            <text x="385" y="395" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold">Case</text>
-            <text x="385" y="408" textAnchor="middle" fill="white" fontSize="9">#2024-187</text>
-            
-            <circle cx="585" cy="350" r="35" fill="#f59e0b" className="graph-node" />
-            <text x="585" y="350" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">Article 15</text>
-            
-            <circle cx="750" cy="450" r="35" fill="#f59e0b" className="graph-node" />
-            <text x="750" y="445" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">Court</text>
-            <text x="750" y="458" textAnchor="middle" fill="white" fontSize="9">Martial</text>
-            
-            {/* Date Nodes */}
-            <circle cx="585" cy="250" r="35" fill="#8b5cf6" className="graph-node" />
-            <text x="585" y="250" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">Mar 15</text>
-            <text x="585" y="262" textAnchor="middle" fill="white" fontSize="9">2024</text>
-            
-            {/* Organization Node */}
-            <circle cx="750" cy="250" r="40" fill="#ec4899" className="graph-node" />
-            <text x="750" y="245" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold">Legal</text>
-            <text x="750" y="258" textAnchor="middle" fill="white" fontSize="9">Division</text>
-          </svg>
-        </div>
+
+
+<div className="ontology-section">
+  <h3 className="ontology-title">
+    <GitBranch size={24} />
+    Database Ontology
+  </h3>
+
+  <div className="ontology-grid">
+
+    {/* COMMUNICATION */}
+    <div className="ontology-card">
+      <div className="ontology-node-type communication-type">
+        <Mail size={20} />
+        <span>COMMUNICATION</span>
       </div>
-
-      <div className="ontology-section">
-        <h3 className="ontology-title">
-          <GitBranch size={24} />
-          Database Ontology
-        </h3>
-        <div className="ontology-grid">
-          <div className="ontology-card">
-            <div className="ontology-node-type person-type">
-              <Users size={20} />
-              <span>PERSON</span>
-            </div>
-            <div className="ontology-properties">
-              <div className="property-item">• name: String</div>
-              <div className="property-item">• rank: String</div>
-              <div className="property-item">• branch: String</div>
-              <div className="property-item">• email: String</div>
-            </div>
-            <div className="ontology-relationships">
-              <div className="rel-chip">STATIONED_AT</div>
-              <div className="rel-chip">ASSIGNED_TO</div>
-              <div className="rel-chip">REPORTS_TO</div>
-            </div>
-          </div>
-
-          <div className="ontology-card">
-            <div className="ontology-node-type location-type">
-              <Database size={20} />
-              <span>LOCATION</span>
-            </div>
-            <div className="ontology-properties">
-              <div className="property-item">• name: String</div>
-              <div className="property-item">• type: String</div>
-              <div className="property-item">• state: String</div>
-              <div className="property-item">• coordinates: Point</div>
-            </div>
-            <div className="ontology-relationships">
-              <div className="rel-chip">LOCATED_IN</div>
-              <div className="rel-chip">PART_OF</div>
-            </div>
-          </div>
-
-          <div className="ontology-card">
-            <div className="ontology-node-type legal-type">
-              <FileText size={20} />
-              <span>LEGAL_CODE</span>
-            </div>
-            <div className="ontology-properties">
-              <div className="property-item">• code: String</div>
-              <div className="property-item">• description: String</div>
-              <div className="property-item">• category: String</div>
-              <div className="property-item">• severity: String</div>
-            </div>
-            <div className="ontology-relationships">
-              <div className="rel-chip">INVOLVES</div>
-              <div className="rel-chip">APPLIES_TO</div>
-            </div>
-          </div>
-
-          <div className="ontology-card">
-            <div className="ontology-node-type case-type">
-              <AlertCircle size={20} />
-              <span>CASE</span>
-            </div>
-            <div className="ontology-properties">
-              <div className="property-item">• case_id: String</div>
-              <div className="property-item">• status: String</div>
-              <div className="property-item">• filed_date: Date</div>
-              <div className="property-item">• priority: String</div>
-            </div>
-            <div className="ontology-relationships">
-              <div className="rel-chip">HAS_DEFENDANT</div>
-              <div className="rel-chip">HAS_ATTORNEY</div>
-            </div>
-          </div>
-        </div>
+      <div className="ontology-properties">
+        <div className="property-item">• message_id: String</div>
+        <div className="property-item">• direction: Inbound | Outbound</div>
+        <div className="property-item">• timestamp: ISO 8601</div>
+        <div className="property-item">• subject_line: String</div>
       </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">SENT_BY → PERSON</div>
+        <div className="rel-chip">SENT_TO → PARTY_ENTITY</div>
+        <div className="rel-chip">MENTIONS → CASE</div>
+        <div className="rel-chip">REFERENCES → MOTION</div>
+        <div className="rel-chip">ATTACHES → EVIDENCE</div>
+      </div>
+    </div>
+
+    {/* PERSON */}
+    <div className="ontology-card">
+      <div className="ontology-node-type person-type">
+        <Users size={20} />
+        <span>PERSON</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• person_id: String</div>
+        <div className="property-item">• full_name: String</div>
+        <div className="property-item">• normalized_name: String</div>
+        <div className="property-item">• email_address?: String</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">WORKS_FOR → PARTY_ENTITY</div>
+        <div className="rel-chip">REPRESENTS → PARTY_ENTITY</div>
+        <div className="rel-chip">FILES → MOTION</div>
+        <div className="rel-chip">PRESIDES_OVER → CASE (Judge)</div>
+      </div>
+    </div>
+
+    {/* PARTY_ENTITY */}
+    <div className="ontology-card">
+      <div className="ontology-node-type party-type">
+        <Layers size={20} />
+        <span>PARTY_ENTITY</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• party_id: String</div>
+        <div className="property-item">• legal_name: String</div>
+        <div className="property-item">• party_type: Individual | Corp | Gov | Firm</div>
+        <div className="property-item">• is_client: Boolean</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">PLAYS_ROLE_IN → CASE</div>
+        <div className="rel-chip">FILES → MOTION</div>
+        <div className="rel-chip">BOUND_BY → CONTRACT</div>
+      </div>
+    </div>
+
+    {/* CASE */}
+    <div className="ontology-card">
+      <div className="ontology-node-type case-type">
+        <AlertCircle size={20} />
+        <span>CASE</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• case_id: String</div>
+        <div className="property-item">• docket_number: String</div>
+        <div className="property-item">• case_type: String</div>
+        <div className="property-item">• status: String</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">HEARD_IN → COURT</div>
+        <div className="rel-chip">ASSIGNED → JUDGE</div>
+        <div className="rel-chip">RAISES → LEGAL_ISSUE</div>
+        <div className="rel-chip">INCLUDES → MOTION</div>
+        <div className="rel-chip">INCLUDES → HEARING</div>
+        <div className="rel-chip">CITES → STATUTE</div>
+        <div className="rel-chip">CITES → PRECEDENT</div>
+        <div className="rel-chip">REFERENCES → CONTRACT</div>
+      </div>
+    </div>
+
+    {/* COURT */}
+    <div className="ontology-card">
+      <div className="ontology-node-type court-type">
+        <Database size={20} />
+        <span>COURT</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• court_id: String</div>
+        <div className="property-item">• court_name: String</div>
+        <div className="property-item">• jurisdiction: String</div>
+        <div className="property-item">• court_level: String</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">HEARS → CASE</div>
+      </div>
+    </div>
+
+    {/* LEGAL_ISSUE */}
+    <div className="ontology-card">
+      <div className="ontology-node-type issue-type">
+        <AlertCircle size={20} />
+        <span>LEGAL_ISSUE</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• issue_id: String</div>
+        <div className="property-item">• issue_description: String</div>
+        <div className="property-item">• issue_category: String</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">RAISED_IN → CASE</div>
+        <div className="rel-chip">SUPPORTED_BY → EVIDENCE</div>
+      </div>
+    </div>
+
+    {/* MOTION */}
+    <div className="ontology-card">
+      <div className="ontology-node-type motion-type">
+        <Send size={20} />
+        <span>MOTION</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• motion_id: String</div>
+        <div className="property-item">• motion_type: String</div>
+        <div className="property-item">• filing_status: String</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">FILED_IN → CASE</div>
+        <div className="rel-chip">FILED_BY → PARTY_ENTITY</div>
+        <div className="rel-chip">SUPPORTED_BY → EVIDENCE</div>
+        <div className="rel-chip">REFERENCED_IN → COMMUNICATION</div>
+      </div>
+    </div>
+
+    {/* HEARING */}
+    <div className="ontology-card">
+      <div className="ontology-node-type hearing-type">
+        <Clock size={20} />
+        <span>HEARING</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• hearing_id: String</div>
+        <div className="property-item">• hearing_type: String</div>
+        <div className="property-item">• scheduled_datetime: ISO 8601</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">OCCURS_IN → CASE</div>
+        <div className="rel-chip">PRESIDED_BY → JUDGE</div>
+      </div>
+    </div>
+
+    {/* CONTRACT */}
+    <div className="ontology-card">
+      <div className="ontology-node-type contract-type">
+        <FileText size={20} />
+        <span>CONTRACT</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• contract_id: String</div>
+        <div className="property-item">• contract_title: String</div>
+        <div className="property-item">• effective_date: ISO 8601</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">BINDS → PARTY_ENTITY</div>
+        <div className="rel-chip">CONTAINS → CLAUSE</div>
+        <div className="rel-chip">REFERENCED_IN → CASE</div>
+      </div>
+    </div>
+
+    {/* CLAUSE */}
+    <div className="ontology-card">
+      <div className="ontology-node-type clause-type">
+        <Binary size={20} />
+        <span>CLAUSE</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• clause_id: String</div>
+        <div className="property-item">• clause_type: String</div>
+        <div className="property-item">• clause_text: Text</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">PART_OF → CONTRACT</div>
+      </div>
+    </div>
+
+    {/* STATUTE */}
+    <div className="ontology-card">
+      <div className="ontology-node-type statute-type">
+        <FileText size={20} />
+        <span>STATUTE</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• statute_id: String</div>
+        <div className="property-item">• citation: String</div>
+        <div className="property-item">• jurisdiction: String</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">REFERENCED_IN → CASE</div>
+        <div className="rel-chip">REFERENCED_IN → MOTION</div>
+      </div>
+    </div>
+
+    {/* PRECEDENT */}
+    <div className="ontology-card">
+      <div className="ontology-node-type precedent-type">
+        <CheckCircle size={20} />
+        <span>PRECEDENT</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• precedent_id: String</div>
+        <div className="property-item">• citation: String</div>
+        <div className="property-item">• issuing_court: String</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">CITED_IN → CASE</div>
+        <div className="rel-chip">CITED_IN → MOTION</div>
+      </div>
+    </div>
+
+    {/* EVIDENCE */}
+    <div className="ontology-card">
+      <div className="ontology-node-type evidence-type">
+        <Database size={20} />
+        <span>EVIDENCE</span>
+      </div>
+      <div className="ontology-properties">
+        <div className="property-item">• evidence_id: String</div>
+        <div className="property-item">• evidence_type: String</div>
+        <div className="property-item">• hash_value: String</div>
+        <div className="property-item">• storage_pointer: URI</div>
+      </div>
+      <div className="ontology-relationships">
+        <div className="rel-chip">SUPPORTS → LEGAL_ISSUE</div>
+        <div className="rel-chip">SUBMITTED_IN → CASE</div>
+        <div className="rel-chip">ATTACHED_TO → COMMUNICATION</div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
       <div className="recent-activity">
         <h3 className="activity-title">Recent Graph Updates</h3>
