@@ -2064,7 +2064,6 @@
   background: #64748b;
 }
 
-/* Scrollbar for email draft textarea */
 .email-textarea-draft::-webkit-scrollbar {
   width: 8px;
 }
