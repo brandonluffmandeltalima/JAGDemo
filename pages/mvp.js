@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Mail, Database, BarChart3, Send, AlertCircle, GitBranch, Users, FileText, Binary, Layers, Clock, CheckCircle, Network, TrendingUp, Plus, Edit3, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Mail, Database, Zap, BarChart3, Send, AlertCircle, GitBranch, Users, FileText, Binary, Layers, Clock, CheckCircle, Network, TrendingUp, Plus, Edit3, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
+import * as d3 from "d3-force";
 
 export default function MVPPage() {
   const [activeView, setActiveView] = useState('mvp');
@@ -21,6 +22,15 @@ export default function MVPPage() {
   const [batchGraphChanges, setBatchGraphChanges] = useState(null);
   const [expandedEntities, setExpandedEntities] = useState({});
   const [graphAnimation, setGraphAnimation] = useState(null);
+  const [singleEmailTypedSummary, setSingleEmailTypedSummary] = useState('');
+  const [singleEmailSummaryTyping, setSingleEmailSummaryTyping] = useState(false);
+
+  // Refs for scrolling
+  const classificationRef = useRef(null);
+  const nerRef = useRef(null);
+  const graphRef = useRef(null);
+  const summaryRef = useRef(null);
+  const progressBarRef = useRef(null);
 
   // Comprehensive entity types with updated colors
   const ENTITY_TYPES = [
@@ -374,49 +384,57 @@ const extractPlaceholderEntities = () => {
   return entities.filter(e => e.start !== -1).sort((a, b) => a.start - b.start);
 };
 
-// Enhanced entity extraction with properties and coreference
-const extractEntitiesWithProperties = (text, isEmail1 = false) => {
+// Enhanced entity extraction with properties and coreference - IMPROVED FOR BATCH EMAILS
+const extractEntitiesWithProperties = (text, emailIndex) => {
   const entities = [];
   
-  if (isEmail1 || text.includes("Thompson v. United States")) {
-    const caseMatch = text.match(/Thompson v\. United States/);
-    if (caseMatch) {
-      entities.push({
+  // Email 0: Thompson v. United States - Initial Discovery
+  if (emailIndex === 0) {
+    entities.push(
+      {
         text: 'Thompson v. United States',
         type: 'CASE',
         color: entityColorMap['CASE'],
-        start: text.indexOf(caseMatch[0]),
-        end: text.indexOf(caseMatch[0]) + caseMatch[0].length,
+        start: text.indexOf('Thompson v. United States'),
+        end: text.indexOf('Thompson v. United States') + 25,
         properties: {
           case_number: '2024-CV-1847',
           case_type: 'Federal Tort Claims Act',
           status: 'Discovery Phase',
           jurisdiction: 'Federal District Court'
         },
-        canonical_id: 'CASE_001'
-      });
-    }
-
-    const plaintiffIdx = text.toLowerCase().indexOf('plaintiff');
-    if (plaintiffIdx !== -1) {
-      entities.push({
+        canonical_id: 'CASE_THOMPSON'
+      },
+      {
         text: 'plaintiff',
         type: 'PARTY_ENTITY',
         color: entityColorMap['PARTY_ENTITY'],
-        start: plaintiffIdx,
-        end: plaintiffIdx + 9,
+        start: text.toLowerCase().indexOf('plaintiff'),
+        end: text.toLowerCase().indexOf('plaintiff') + 9,
         properties: {
           role: 'Plaintiff',
           name_resolved: 'Robert Thompson',
-          party_type: 'Individual'
+          party_type: 'Individual',
+          claims: 'Negligence, Vehicle Collision'
         },
-        canonical_id: 'PARTY_001',
+        canonical_id: 'PARTY_PLAINTIFF_THOMPSON',
+        is_coreference: true,
         refers_to: 'Robert Thompson'
-      });
-    }
-
-    if (text.includes('negligence')) {
-      entities.push({
+      },
+      {
+        text: 'government driver',
+        type: 'PARTY_ENTITY',
+        color: entityColorMap['PARTY_ENTITY'],
+        start: text.indexOf('government driver'),
+        end: text.indexOf('government driver') + 17,
+        properties: {
+          role: 'Defendant',
+          employer: 'United States Government',
+          party_type: 'Government Employee'
+        },
+        canonical_id: 'PARTY_GOV_DRIVER'
+      },
+      {
         text: 'negligence',
         type: 'LEGAL_ISSUE',
         color: entityColorMap['LEGAL_ISSUE'],
@@ -427,12 +445,9 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
           standard: 'Reasonable Person Standard',
           burden_of_proof: 'Preponderance of Evidence'
         },
-        canonical_id: 'ISSUE_001'
-      });
-    }
-
-    if (text.includes('Vehicle inspection logs')) {
-      entities.push({
+        canonical_id: 'ISSUE_NEGLIGENCE'
+      },
+      {
         text: 'Vehicle inspection logs',
         type: 'EVIDENCE',
         color: entityColorMap['EVIDENCE'],
@@ -442,20 +457,30 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
           evidence_type: 'Documentary',
           relevance: 'Maintenance History',
           custodian: 'Motor Pool',
-          authentication_required: true
+          authentication_required: true,
+          finding: 'No mechanical deficiencies'
         },
-        canonical_id: 'EVID_001'
-      });
-    }
-
-    const maj = text.match(/MAJ Allen/);
-    if (maj) {
-      entities.push({
+        canonical_id: 'EVID_VEHICLE_LOGS'
+      },
+      {
+        text: 'Accident reconstruction',
+        type: 'EVIDENCE',
+        color: entityColorMap['EVIDENCE'],
+        start: text.indexOf('Accident reconstruction'),
+        end: text.indexOf('Accident reconstruction') + 23,
+        properties: {
+          evidence_type: 'Expert Analysis',
+          relevance: 'Causation and Liability',
+          finding: 'Possible contributory negligence'
+        },
+        canonical_id: 'EVID_RECONSTRUCTION'
+      },
+      {
         text: 'MAJ Allen',
         type: 'PERSON',
         color: entityColorMap['PERSON'],
-        start: text.indexOf(maj[0]),
-        end: text.indexOf(maj[0]) + maj[0].length,
+        start: text.indexOf('MAJ Allen'),
+        end: text.indexOf('MAJ Allen') + 9,
         properties: {
           rank: 'Major',
           first_name: 'James',
@@ -463,52 +488,144 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
           role: 'Defense Counsel',
           unit: 'Trial Defense Service'
         },
-        canonical_id: 'PERSON_001'
-      });
-    }
-
-    const cpt = text.match(/CPT (Smith|Nguyen)/);
-    if (cpt) {
-      const name = cpt[1];
-      entities.push({
-        text: `CPT ${name}`,
+        canonical_id: 'PERSON_MAJ_ALLEN'
+      },
+      {
+        text: 'CPT Smith',
         type: 'PERSON',
         color: entityColorMap['PERSON'],
-        start: text.indexOf(cpt[0]),
-        end: text.indexOf(cpt[0]) + cpt[0].length,
+        start: text.indexOf('CPT Smith'),
+        end: text.indexOf('CPT Smith') + 9,
         properties: {
           rank: 'Captain',
-          first_name: name === 'Smith' ? 'John' : 'Lisa',
-          last_name: name,
+          first_name: 'John',
+          last_name: 'Smith',
           role: 'Staff Judge Advocate',
           unit: 'Office of the Staff Judge Advocate'
         },
-        canonical_id: name === 'Smith' ? 'PERSON_002' : 'PERSON_003'
-      });
-    }
+        canonical_id: 'PERSON_CPT_SMITH'
+      }
+    );
   }
-
-  if (text.includes("Alvarez v. United States")) {
-    const caseMatch = text.match(/Alvarez v\. United States/);
-    if (caseMatch) {
-      entities.push({
+  
+  // Email 1: Thompson v. United States - Witness Statements
+  else if (emailIndex === 1) {
+    entities.push(
+      {
+        text: 'Thompson v. United States',
+        type: 'CASE',
+        color: entityColorMap['CASE'],
+        start: text.indexOf('Thompson v. United States'),
+        end: text.indexOf('Thompson v. United States') + 25,
+        properties: {
+          case_number: '2024-CV-1847',
+          case_type: 'Federal Tort Claims Act',
+          status: 'Discovery Phase'
+        },
+        canonical_id: 'CASE_THOMPSON'
+      },
+      {
+        text: 'witness statements',
+        type: 'EVIDENCE',
+        color: entityColorMap['EVIDENCE'],
+        start: text.indexOf('witness statements'),
+        end: text.indexOf('witness statements') + 18,
+        properties: {
+          evidence_type: 'Testimonial',
+          relevance: 'Eyewitness Account',
+          count: '2 civilian witnesses'
+        },
+        canonical_id: 'EVID_WITNESS_STATEMENTS'
+      },
+      {
+        text: 'civilian witnesses',
+        type: 'PARTY_ENTITY',
+        color: entityColorMap['PARTY_ENTITY'],
+        start: text.indexOf('civilian witnesses'),
+        end: text.indexOf('civilian witnesses') + 18,
+        properties: {
+          party_type: 'Witness',
+          count: 2,
+          observation: 'Excessive speed by plaintiff'
+        },
+        canonical_id: 'PARTY_WITNESSES'
+      },
+      {
+        text: 'plaintiff',
+        type: 'PARTY_ENTITY',
+        color: entityColorMap['PARTY_ENTITY'],
+        start: text.toLowerCase().indexOf('plaintiff'),
+        end: text.toLowerCase().indexOf('plaintiff') + 9,
+        properties: {
+          name_resolved: 'Robert Thompson',
+          allegation: 'GOV ran stop sign',
+          witness_corroboration: 'None'
+        },
+        canonical_id: 'PARTY_PLAINTIFF_THOMPSON',
+        is_coreference: true,
+        refers_to: 'Robert Thompson'
+      },
+      {
+        text: 'pre-existing conditions',
+        type: 'EVIDENCE',
+        color: entityColorMap['EVIDENCE'],
+        start: text.indexOf('pre-existing conditions'),
+        end: text.indexOf('pre-existing conditions') + 23,
+        properties: {
+          evidence_type: 'Medical Records',
+          relevance: 'Damages Assessment',
+          impact: 'Overstated damages claim'
+        },
+        canonical_id: 'EVID_MEDICAL'
+      },
+      {
+        text: 'CPT Nguyen',
+        type: 'PERSON',
+        color: entityColorMap['PERSON'],
+        start: text.indexOf('CPT Nguyen'),
+        end: text.indexOf('CPT Nguyen') + 10,
+        properties: {
+          rank: 'Captain',
+          first_name: 'Lisa',
+          last_name: 'Nguyen',
+          role: 'Assistant Defense Counsel'
+        },
+        canonical_id: 'PERSON_CPT_NGUYEN'
+      }
+    );
+  }
+  
+  // Email 2: Alvarez v. United States - Command Investigation
+  else if (emailIndex === 2) {
+    entities.push(
+      {
         text: 'Alvarez v. United States',
         type: 'CASE',
         color: entityColorMap['CASE'],
-        start: text.indexOf(caseMatch[0]),
-        end: text.indexOf(caseMatch[0]) + caseMatch[0].length,
+        start: text.indexOf('Alvarez v. United States'),
+        end: text.indexOf('Alvarez v. United States') + 24,
         properties: {
           case_number: '2024-CV-2193',
           case_type: 'Premises Liability',
           status: 'Pre-Settlement Negotiation',
           jurisdiction: 'Federal District Court'
         },
-        canonical_id: 'CASE_002'
-      });
-    }
-
-    if (text.includes('Range 14')) {
-      entities.push({
+        canonical_id: 'CASE_ALVAREZ'
+      },
+      {
+        text: 'Command Investigation',
+        type: 'EVIDENCE',
+        color: entityColorMap['EVIDENCE'],
+        start: text.indexOf('Command Investigation'),
+        end: text.indexOf('Command Investigation') + 21,
+        properties: {
+          evidence_type: 'Official Investigation Report',
+          relevance: 'Liability Determination',
+          conducted_by: 'LTC Harris'
+        },
+        canonical_id: 'EVID_CMD_INVESTIGATION'
+      },
+      {
         text: 'Range 14',
         type: 'LOCATION',
         color: entityColorMap['LOCATION'],
@@ -518,20 +635,43 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
           location_type: 'Training Range',
           installation: 'Fort Liberty',
           safety_classification: 'Restricted',
-          hazard_status: 'Known Erosion Risk'
+          hazard_status: 'Known Erosion Risk',
+          notice_given: 'Prior notice documented'
         },
-        canonical_id: 'LOC_001'
-      });
-    }
-
-    const ltc = text.match(/LTC Harris/);
-    if (ltc) {
-      entities.push({
+        canonical_id: 'LOC_RANGE14'
+      },
+      {
+        text: 'erosion hazards',
+        type: 'LEGAL_ISSUE',
+        color: entityColorMap['LEGAL_ISSUE'],
+        start: text.indexOf('erosion hazards'),
+        end: text.indexOf('erosion hazards') + 15,
+        properties: {
+          issue_type: 'Premises Liability',
+          notice: 'Prior notice given',
+          maintenance_status: 'Delayed due to funding'
+        },
+        canonical_id: 'ISSUE_EROSION'
+      },
+      {
+        text: 'Contractor',
+        type: 'PARTY_ENTITY',
+        color: entityColorMap['PARTY_ENTITY'],
+        start: text.indexOf('Contractor'),
+        end: text.indexOf('Contractor') + 10,
+        properties: {
+          party_type: 'Third Party',
+          authorization: 'Authorized',
+          scope_compliance: 'Within scope of duties'
+        },
+        canonical_id: 'PARTY_CONTRACTOR'
+      },
+      {
         text: 'LTC Harris',
         type: 'PERSON',
         color: entityColorMap['PERSON'],
-        start: text.indexOf(ltc[0]),
-        end: text.indexOf(ltc[0]) + ltc[0].length,
+        start: text.indexOf('LTC Harris'),
+        end: text.indexOf('LTC Harris') + 10,
         properties: {
           rank: 'Lieutenant Colonel',
           first_name: 'Michael',
@@ -539,12 +679,122 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
           role: 'Command Investigation Officer',
           unit: 'Installation Command'
         },
-        canonical_id: 'PERSON_004'
-      });
-    }
-
-    if (text.includes('USARCS')) {
-      entities.push({
+        canonical_id: 'PERSON_LTC_HARRIS'
+      },
+      {
+        text: 'CPT Smith',
+        type: 'PERSON',
+        color: entityColorMap['PERSON'],
+        start: text.indexOf('CPT Smith'),
+        end: text.indexOf('CPT Smith') + 9,
+        properties: {
+          rank: 'Captain',
+          first_name: 'John',
+          last_name: 'Smith',
+          role: 'Staff Judge Advocate'
+        },
+        canonical_id: 'PERSON_CPT_SMITH'
+      }
+    );
+  }
+  
+  // Email 3: Potluck - IRRELEVANT
+  else if (emailIndex === 3) {
+    entities.push(
+      {
+        text: 'CPT John Smith',
+        type: 'PERSON',
+        color: entityColorMap['PERSON'],
+        start: text.indexOf('CPT John Smith'),
+        end: text.indexOf('CPT John Smith') + 14,
+        properties: {
+          rank: 'Captain',
+          first_name: 'John',
+          last_name: 'Smith'
+        },
+        canonical_id: 'PERSON_CPT_SMITH'
+      },
+      {
+        text: 'Friday at 1200',
+        type: 'DATE',
+        color: entityColorMap['DATE'],
+        start: text.indexOf('Friday at 1200'),
+        end: text.indexOf('Friday at 1200') + 14,
+        properties: {
+          date_type: 'event_date',
+          event: 'Team Potluck'
+        },
+        canonical_id: 'DATE_POTLUCK'
+      },
+      {
+        text: 'Break room',
+        type: 'LOCATION',
+        color: entityColorMap['LOCATION'],
+        start: text.indexOf('Break room'),
+        end: text.indexOf('Break room') + 10,
+        properties: {
+          location_type: 'Common Area',
+          purpose: 'Social Event'
+        },
+        canonical_id: 'LOC_BREAKROOM'
+      },
+      {
+        text: 'SFC Ramirez',
+        type: 'PERSON',
+        color: entityColorMap['PERSON'],
+        start: text.indexOf('SFC Ramirez'),
+        end: text.indexOf('SFC Ramirez') + 11,
+        properties: {
+          rank: 'Sergeant First Class',
+          last_name: 'Ramirez',
+          role: 'Unit Administrator'
+        },
+        canonical_id: 'PERSON_SFC_RAMIREZ'
+      }
+    );
+  }
+  
+  // Email 4: Alvarez v. United States - Settlement
+  else if (emailIndex === 4) {
+    entities.push(
+      {
+        text: 'Alvarez v. United States',
+        type: 'CASE',
+        color: entityColorMap['CASE'],
+        start: text.indexOf('Alvarez v. United States'),
+        end: text.indexOf('Alvarez v. United States') + 24,
+        properties: {
+          case_number: '2024-CV-2193',
+          case_type: 'Premises Liability',
+          status: 'Settlement Consideration'
+        },
+        canonical_id: 'CASE_ALVAREZ'
+      },
+      {
+        text: 'exposure analysis',
+        type: 'EVIDENCE',
+        color: entityColorMap['EVIDENCE'],
+        start: text.indexOf('exposure analysis'),
+        end: text.indexOf('exposure analysis') + 17,
+        properties: {
+          evidence_type: 'Risk Assessment',
+          finding: 'Moderate to high liability risk'
+        },
+        canonical_id: 'EVID_EXPOSURE_ANALYSIS'
+      },
+      {
+        text: 'Liability risk',
+        type: 'LEGAL_ISSUE',
+        color: entityColorMap['LEGAL_ISSUE'],
+        start: text.indexOf('Liability risk'),
+        end: text.indexOf('Liability risk') + 14,
+        properties: {
+          assessment: 'Moderate to high',
+          damages_status: 'Limited'
+        },
+        canonical_id: 'ISSUE_LIABILITY'
+      },
+      {
         text: 'USARCS',
         type: 'PARTY_ENTITY',
         color: entityColorMap['PARTY_ENTITY'],
@@ -556,13 +806,79 @@ const extractEntitiesWithProperties = (text, isEmail1 = false) => {
           role: 'Settlement Authority',
           jurisdiction: 'Federal'
         },
-        canonical_id: 'ENTITY_001'
-      });
-    }
+        canonical_id: 'PARTY_USARCS'
+      },
+      {
+        text: 'MAJ Allen',
+        type: 'PERSON',
+        color: entityColorMap['PERSON'],
+        start: text.indexOf('MAJ Allen'),
+        end: text.indexOf('MAJ Allen') + 9,
+        properties: {
+          rank: 'Major',
+          first_name: 'James',
+          last_name: 'Allen',
+          role: 'Defense Counsel'
+        },
+        canonical_id: 'PERSON_MAJ_ALLEN'
+      },
+      {
+        text: 'CPT Smith',
+        type: 'PERSON',
+        color: entityColorMap['PERSON'],
+        start: text.indexOf('CPT Smith'),
+        end: text.indexOf('CPT Smith') + 9,
+        properties: {
+          rank: 'Captain',
+          first_name: 'John',
+          last_name: 'Smith',
+          role: 'Staff Judge Advocate'
+        },
+        canonical_id: 'PERSON_CPT_SMITH'
+      }
+    );
   }
 
   return entities.filter(e => e.start !== -1);
 };
+
+// Generate contextual relationships based on entities
+const generateRelationships = (entities, emailIndex) => {
+  const relationships = [];
+  
+  if (emailIndex === 0) {
+    relationships.push(
+      { from: 'Robert Thompson', relation: 'PLAINTIFF_IN', to: 'Thompson v. United States', properties: { role: 'Plaintiff', claim_type: 'Negligence' } },
+      { from: 'Thompson v. United States', relation: 'INVOLVES', to: 'government driver', properties: { role: 'Defendant' } },
+      { from: 'Vehicle inspection logs', relation: 'EVIDENCE_IN', to: 'Thompson v. United States', properties: { finding: 'No deficiencies' } },
+      { from: 'Accident reconstruction', relation: 'SUPPORTS', to: 'contributory negligence', properties: { conclusion: 'Possible plaintiff negligence' } },
+      { from: 'MAJ Allen', relation: 'COUNSEL_FOR', to: 'United States', properties: { case: 'Thompson v. United States' } }
+    );
+  } else if (emailIndex === 1) {
+    relationships.push(
+      { from: 'civilian witnesses', relation: 'TESTIFY_IN', to: 'Thompson v. United States', properties: { observation: 'Excessive speed by plaintiff' } },
+      { from: 'witness statements', relation: 'CONTRADICT', to: 'plaintiff claim', properties: { claim: 'GOV ran stop sign' } },
+      { from: 'pre-existing conditions', relation: 'AFFECT', to: 'damages claim', properties: { impact: 'Overstated' } },
+      { from: 'CPT Nguyen', relation: 'ANALYZES', to: 'Thompson v. United States', properties: { focus: 'Witness credibility' } }
+    );
+  } else if (emailIndex === 2) {
+    relationships.push(
+      { from: 'Command Investigation', relation: 'DOCUMENTS', to: 'erosion hazards', properties: { location: 'Range 14' } },
+      { from: 'Range 14', relation: 'SUBJECT_OF', to: 'Alvarez v. United States', properties: { incident_type: 'Premises liability' } },
+      { from: 'Contractor', relation: 'AUTHORIZED_AT', to: 'Range 14', properties: { scope: 'Within duties' } },
+      { from: 'LTC Harris', relation: 'CONDUCTED', to: 'Command Investigation', properties: { findings: 'Prior notice, delayed maintenance' } }
+    );
+  } else if (emailIndex === 4) {
+    relationships.push(
+      { from: 'exposure analysis', relation: 'ASSESSES', to: 'Alvarez v. United States', properties: { risk: 'Moderate to high' } },
+      { from: 'Alvarez v. United States', relation: 'REQUIRES_COORDINATION_WITH', to: 'USARCS', properties: { purpose: 'Settlement authority' } },
+      { from: 'MAJ Allen', relation: 'RECOMMENDS', to: 'early settlement', properties: { rationale: 'Fiscal prudence' } }
+    );
+  }
+  
+  return relationships;
+};
+
 // Helper function to create annotated text with highlights
 const createAnnotatedText = (text, entities) => {
   if (!entities || entities.length === 0) return text;
@@ -582,7 +898,6 @@ const createAnnotatedText = (text, entities) => {
   let lastIndex = 0;
 
   nonOverlappingEntities.forEach((entity, idx) => {
-    // Add text before entity
     if (entity.start > lastIndex) {
       result.push(text.substring(lastIndex, entity.start));
     }
@@ -591,19 +906,19 @@ const createAnnotatedText = (text, entities) => {
       ? `${entity.type} → ${entity.refers_to}` 
       : entity.type;
 
-    // Wrap entity text + label together
     result.push(
       <span
         key={`entity-${idx}`}
         className="annotated-entity"
         style={{ 
-          backgroundColor: `${entity.color}15`,
+          backgroundColor: `${entity.color}`,
           borderBottom: `2px solid ${entity.color}`,
           padding: '2px 4px',
           margin: '0 2px',
           display: 'inline',
           cursor: 'pointer',
-          whiteSpace: 'nowrap' // ADDED: Keep entity + label together
+          whiteSpace: 'nowrap',
+          borderRadius: '5px'
         }}
         title={entity.properties ? JSON.stringify(entity.properties, null, 2) : ''}
       >
@@ -631,7 +946,6 @@ const createAnnotatedText = (text, entities) => {
     lastIndex = entity.end;
   });
 
-  // Add remaining text
   if (lastIndex < text.length) {
     result.push(text.substring(lastIndex));
   }
@@ -701,6 +1015,24 @@ JAGBot`;
   }, 10);
 };
 
+// Single email typing effect
+const startSingleEmailTypingEffect = async (summaryText) => {
+  setSingleEmailSummaryTyping(true);
+  setSingleEmailTypedSummary('');
+  
+  let index = 0;
+  
+  const typingInterval = setInterval(() => {
+    if (index < summaryText.length) {
+      setSingleEmailTypedSummary(summaryText.substring(0, index + 1));
+      index++;
+    } else {
+      clearInterval(typingInterval);
+      setSingleEmailSummaryTyping(false);
+    }
+  }, 8);
+};
+
 const formatSummary = (text) => {
   const parts = text.split(/(Case \d+:.*|Recent Updates:|Next steps.*:)/g);
   return parts.map((part, index) => {
@@ -711,9 +1043,27 @@ const formatSummary = (text) => {
   });
 };
 
+// Smooth scroll helper with delay
+const smoothScrollToElement = (ref, delay = 0) => {
+  setTimeout(() => {
+    if (ref && ref.current) {
+      ref.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }, delay);
+};
+
 const handleProcessEmail = async () => {
   setProcessing(true);
   setPipelineStep('classification');
+  setResults(null);
+  setSingleEmailTypedSummary('');
+  setSingleEmailSummaryTyping(false);
+  
+  // Ensure minimum time between steps
+  const MIN_STEP_DELAY = 1000;
   
   await new Promise(resolve => setTimeout(resolve, 1200));
   
@@ -727,8 +1077,14 @@ const handleProcessEmail = async () => {
     }
   });
   
+  // Scroll to classification after a delay
+  smoothScrollToElement(classificationRef, 300);
+  
+  await new Promise(resolve => setTimeout(resolve, Math.max(MIN_STEP_DELAY, 1500)));
+  
   setPipelineStep('ner');
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  await new Promise(resolve => setTimeout(resolve, 800));
   
   setResults(prev => ({
     ...prev,
@@ -737,10 +1093,15 @@ const handleProcessEmail = async () => {
     relationships: []
   }));
   
+  // Scroll to NER section
+  smoothScrollToElement(nerRef, 300);
+  
+  await new Promise(resolve => setTimeout(resolve, Math.max(MIN_STEP_DELAY, 1500)));
+  
   setPipelineStep('graph');
-  await new Promise(resolve => setTimeout(resolve, 1200));
+  
+  await new Promise(resolve => setTimeout(resolve, 800));
 
-  // Generate relationships with properties
   const relationships = [
     { 
       from: 'Staff Sergeant Michael A. Reynolds', 
@@ -792,7 +1153,6 @@ const handleProcessEmail = async () => {
     }
   ];
 
-  // Generate graph changes
   const graphChanges = {
     nodes_added: [
       { id: 'PERSON_REYNOLDS', label: 'SSG Michael A. Reynolds', type: 'PERSON' },
@@ -813,45 +1173,62 @@ const handleProcessEmail = async () => {
   setGraphChanges(graphChanges);
   setGraphAnimation({ nodes: graphChanges.nodes_added, relationships: relationships });
 
+  // Scroll to graph
+  smoothScrollToElement(graphRef, 300);
+  
+  await new Promise(resolve => setTimeout(resolve, Math.max(MIN_STEP_DELAY, 1200)));
+
   setResults(prev => ({
     ...prev,
     relationships: relationships,
-    summary: (
-  <>
-    <p>Good afternoon CPT Smith,</p>
+    summaryText: `Good afternoon CPT Smith,
 
-    <p>Below is your weekly litigation update for matters within your portfolio:</p>
+Below is your weekly litigation update for matters within your portfolio:
 
-    <p><strong>United States v. Reynolds (UCMJ – Art. 92)</strong></p>
-    <p>
-      Defense counsel entered representation and issued a formal evidence preservation
-      demand covering unit taskings, command communications, and CID materials.
-    </p>
-    <p>
-      Article 32 hearing remains scheduled for 10 January 2025 at Fort Liberty.
-      No continuance requests noted.
-    </p>
-    <p>
-      Defense is signaling potential discovery and preservation challenges tied to
-      Feb–Mar 2024 unit directives.
-    </p>
+United States v. Reynolds (UCMJ – Art. 92)
 
-    <p><strong>Action Items:</strong></p>
+Defense counsel entered representation and issued a formal evidence preservation demand covering unit taskings, command communications, and CID materials.
 
-    <p>
-      Ensure responsive unit records and command communications are preserved and
-      coordinated with CID ahead of the Article 32.
-    </p>
+Article 32 hearing remains scheduled for 10 January 2025 at Fort Liberty. No continuance requests noted.
 
-    <p>
-      Respectfully,<br />
-      JAG Bot
-    </p>
-  </>
-)
+Defense is signaling potential discovery and preservation challenges tied to Feb–Mar 2024 unit directives.
+
+Action Items:
+
+Ensure responsive unit records and command communications are preserved and coordinated with CID ahead of the Article 32.
+
+Respectfully,
+JAG Bot`
   }));
   
   setPipelineStep('summary');
+  
+  // Scroll to summary
+  smoothScrollToElement(summaryRef, 300);
+  
+  // Start typing effect for summary
+  const summaryText = `Good afternoon CPT Smith,
+
+Below is your weekly litigation update for matters within your portfolio:
+
+United States v. Reynolds (UCMJ – Art. 92)
+
+Defense counsel entered representation and issued a formal evidence preservation demand covering unit taskings, command communications, and CID materials.
+
+Article 32 hearing remains scheduled for 10 January 2025 at Fort Liberty. No continuance requests noted.
+
+Defense is signaling potential discovery and preservation challenges tied to Feb–Mar 2024 unit directives.
+
+Action Items:
+
+Ensure responsive unit records and command communications are preserved and coordinated with CID ahead of the Article 32.
+
+Respectfully,
+JAG Bot`;
+
+  await new Promise(resolve => setTimeout(resolve, 500));
+  startSingleEmailTypingEffect(summaryText);
+  
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   setPipelineStep('complete');
@@ -892,6 +1269,10 @@ const handleProcessEmailWithAPI = async () => {
         confidence: classifyData.confidence
       }
     });
+
+    smoothScrollToElement(classificationRef, 300);
+
+    await new Promise(r => setTimeout(r, 1000));
 
     setPipelineStep('ner');
 
@@ -935,11 +1316,21 @@ const handleProcessEmailWithAPI = async () => {
       relationships: []
     }));
 
+    smoothScrollToElement(nerRef, 300);
+
+    await new Promise(r => setTimeout(r, 1000));
+
     setPipelineStep('graph');
     await new Promise(r => setTimeout(r, 600));
 
+    smoothScrollToElement(graphRef, 300);
+
+    await new Promise(r => setTimeout(r, 1000));
+
     setPipelineStep('summary');
     await new Promise(r => setTimeout(r, 600));
+
+    smoothScrollToElement(summaryRef, 300);
 
     setPipelineStep('complete');
 
@@ -961,9 +1352,13 @@ const handleBatchProcess = async () => {
   setBatchResults([]);
   setCurrentBatchIndex(0);
   setBatchGraphChanges(null);
+  setShowBatchSummary(false);
+  setTypedSummary('');
+  setSummaryLoading(false);
 
   const allGraphNodes = new Map();
   const allGraphRelationships = [];
+  const MIN_STEP_DELAY = 1000;
 
   for (let i = 0; i < testEmails.length; i++) {
     setCurrentBatchIndex(i);
@@ -972,46 +1367,8 @@ const handleBatchProcess = async () => {
     
     const isRelevant = i !== 3;
     const fullText = `Subject: ${testEmails[i].subject}\n\n${testEmails[i].content}`;
-    const entities = isRelevant ? extractEntitiesWithProperties(fullText, i === 0) : [];
-    
-    const relationships = [];
-    if (isRelevant) {
-      const persons = entities.filter(e => e.type === 'PERSON');
-      const cases = entities.filter(e => e.type === 'CASE');
-      const locations = entities.filter(e => e.type === 'LOCATION');
-      const parties = entities.filter(e => e.type === 'PARTY_ENTITY');
-
-      persons.forEach(person => {
-        if (cases.length > 0) {
-          relationships.push({
-            from: person.text,
-            relation: 'INVOLVED_IN',
-            to: cases[0].text,
-            properties: { role: person.properties?.role || 'Participant' }
-          });
-        }
-      });
-
-      if (cases.length > 0 && locations.length > 0) {
-        relationships.push({
-          from: cases[0].text,
-          relation: 'LOCATION',
-          to: locations[0].text,
-          properties: { relevance: 'Incident Location' }
-        });
-      }
-
-      parties.forEach(party => {
-        if (cases.length > 0) {
-          relationships.push({
-            from: cases[0].text,
-            relation: 'INVOLVES_PARTY',
-            to: party.text,
-            properties: { party_role: party.properties?.role || 'Party' }
-          });
-        }
-      });
-    }
+    const entities = isRelevant ? extractEntitiesWithProperties(fullText, i) : [];
+    const relationships = isRelevant ? generateRelationships(entities, i) : [];
 
     entities.forEach(entity => {
       if (!allGraphNodes.has(entity.canonical_id)) {
@@ -1041,7 +1398,20 @@ const handleBatchProcess = async () => {
         "This email contains routine administrative information with no legal matters requiring attention."
     };
     
-    setBatchResults(prev => [...prev, mockResult]);
+    setBatchResults(prev => {
+      const newResults = [...prev, mockResult];
+      // Scroll to the latest result
+      setTimeout(() => {
+        const resultCards = document.querySelectorAll('.batch-result-card');
+        if (resultCards[i]) {
+          resultCards[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+      return newResults;
+    });
+
+    // Add delay between processing each email
+    await new Promise(resolve => setTimeout(resolve, MIN_STEP_DELAY));
   }
 
   setBatchGraphChanges({
@@ -1062,7 +1432,31 @@ const handleBatchProcess = async () => {
 
   setProcessing(false);
   setCurrentBatchIndex(-1);
+  
+  // Wait before showing graph changes
+  await new Promise(resolve => setTimeout(resolve, MIN_STEP_DELAY));
+  
+  // Scroll to graph changes
+  setTimeout(() => {
+    const graphSection = document.querySelector('.graph-changes-section');
+    if (graphSection) {
+      graphSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 300);
+  
+  // Wait before showing summary
+  await new Promise(resolve => setTimeout(resolve, MIN_STEP_DELAY + 500));
+  
   setShowBatchSummary(true);
+  
+  // Scroll to summary
+  setTimeout(() => {
+    const summarySection = document.querySelector('.batch-summary-outlook-container');
+    if (summarySection) {
+      summarySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 300);
+  
   startTypingEffect();
 };
 
@@ -1140,7 +1534,42 @@ const handleBatchProcess = async () => {
         </div>
       </nav>
       
-      <main className='main-content'>
+      {/* Fixed Progress Bar */}
+      {processing && (
+        <div ref={progressBarRef} className="fixed-progress-bar">
+          <div className="pipeline-progress">
+            <div className={`progress-step ${pipelineStep === 'classification' ? 'active' : pipelineStep && ['ner', 'graph', 'summary', 'complete'].includes(pipelineStep) ? 'complete' : ''}`}>
+              <div className="progress-icon">
+                <Binary size={20} />
+              </div>
+              <span>Classification</span>
+            </div>
+            <div className="progress-connector"></div>
+            <div className={`progress-step ${pipelineStep === 'ner' ? 'active' : pipelineStep && ['graph', 'summary', 'complete'].includes(pipelineStep) ? 'complete' : ''}`}>
+              <div className="progress-icon">
+                <FileText size={20} />
+              </div>
+              <span>NER</span>
+            </div>
+            <div className="progress-connector"></div>
+            <div className={`progress-step ${pipelineStep === 'graph' ? 'active' : pipelineStep && ['summary', 'complete'].includes(pipelineStep) ? 'complete' : ''}`}>
+              <div className="progress-icon">
+                <Network size={20} />
+              </div>
+              <span>Graph Update</span>
+            </div>
+            <div className="progress-connector"></div>
+            <div className={`progress-step ${pipelineStep === 'summary' ? 'active' : pipelineStep === 'complete' ? 'complete' : ''}`}>
+              <div className="progress-icon">
+                <FileText size={20} />
+              </div>
+              <span>Summary</span>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <main className='main-content' style={{ paddingTop: processing ? '100px' : '0' }}>
         <div className="mvp-container">
           <div className="mvp-header">
             <Send className="mvp-icon" />
@@ -1149,25 +1578,6 @@ const handleBatchProcess = async () => {
               <p className="mvp-subtitle">Test single emails or process a batch</p>
             </div>
           </div>
-
-          {/* <div className="entity-types-display">
-            <h4 className="entity-types-title">
-              <Network size={16} style={{ marginRight: '8px' }} />
-              Extracting Entity Types
-            </h4>
-            <div className="entity-types-grid">
-              {ENTITY_TYPES.map((type, idx) => (
-                <span 
-                  key={idx} 
-                  className="entity-type-badge"
-                  style={{ backgroundColor: entityColorMap[type] }}
-                >
-       
-                  {type}
-                </span>
-              ))}
-            </div>
-          </div> */}
 
           {/* Mode Toggle */}
           <div className="mode-toggle-container">
@@ -1276,39 +1686,6 @@ const handleBatchProcess = async () => {
                   />
                 </div>
 
-                {/* Pipeline Progress Indicator */}
-                {processing && (
-                  <div className="pipeline-progress">
-                    <div className={`progress-step ${pipelineStep === 'classification' ? 'active' : pipelineStep && ['ner', 'graph', 'summary', 'complete'].includes(pipelineStep) ? 'complete' : ''}`}>
-                      <div className="progress-icon">
-                        <Binary size={20} />
-                      </div>
-                      <span>Classification</span>
-                    </div>
-                    <div className="progress-connector"></div>
-                    <div className={`progress-step ${pipelineStep === 'ner' ? 'active' : pipelineStep && ['graph', 'summary', 'complete'].includes(pipelineStep) ? 'complete' : ''}`}>
-                      <div className="progress-icon">
-                        <FileText size={20} />
-                      </div>
-                      <span>NER</span>
-                    </div>
-                    <div className="progress-connector"></div>
-                    <div className={`progress-step ${pipelineStep === 'graph' ? 'active' : pipelineStep && ['summary', 'complete'].includes(pipelineStep) ? 'complete' : ''}`}>
-                      <div className="progress-icon">
-                        <Network size={20} />
-                      </div>
-                      <span>Graph Update</span>
-                    </div>
-                    <div className="progress-connector"></div>
-                    <div className={`progress-step ${pipelineStep === 'summary' ? 'active' : pipelineStep === 'complete' ? 'complete' : ''}`}>
-                      <div className="progress-icon">
-                        <FileText size={20} />
-                      </div>
-                      <span>Summary</span>
-                    </div>
-                  </div>
-                )}
-
                 <button
                   className={`process-button ${processing ? 'processing' : ''}`}
                   onClick={useRealAPI ? handleProcessEmailWithAPI : handleProcessEmail}
@@ -1412,7 +1789,6 @@ const handleBatchProcess = async () => {
                         </div>
 
                         <div className="batch-result-content">
-                          {/* Email Preview FIRST */}
                           {result.body && result.body.length > 0 && (
                             <div className="batch-email-body-section">
                               <strong>Email Preview:</strong>
@@ -1603,7 +1979,7 @@ const handleBatchProcess = async () => {
           {results && (
             <div className="results-section">
               {results.classification && (
-                <div className="results-card classification-card">
+                <div ref={classificationRef} className="results-card classification-card">
                   <h3 className="results-title">Binary Classification</h3>
                   <div className="classification-result">
                     <div
@@ -1639,7 +2015,7 @@ const handleBatchProcess = async () => {
 
               {/* Entity Annotations */}
               {results.entities && results.entities.length > 0 && results.originalText && (
-                <div className="results-card annotation-card">
+                <div ref={nerRef} className="results-card annotation-card">
                   <h3 className="results-title">Entity Annotations</h3>
                   <div className="annotated-email-container">
                     <div className="annotated-email-content">
@@ -1659,9 +2035,9 @@ const handleBatchProcess = async () => {
                         <div className="entity-header-enhanced">
                           <div className="entity-main-info">
                             <span className="entity-text-enhanced">{entity.text}</span>
-                            <span className="entity-type-badge" style={{ backgroundColor: entity.color }}>
+                            {/* <span className="entity-type-badge" style={{ backgroundColor: entity.color }}>
                               {entity.type}
-                            </span>
+                            </span> */}
                           </div>
                           {entity.properties && Object.keys(entity.properties).length > 0 && (
                             <button 
@@ -1711,597 +2087,388 @@ const handleBatchProcess = async () => {
                           <span className="rel-arrow">→</span>
                           <span className="rel-node">{rel.to}</span>
                         </div>
-                        {/* {rel.properties && Object.keys(rel.properties).length > 0 && (
-                          <div className="relationship-properties">
-                            {Object.entries(rel.properties).map(([key, value], pidx) => (
-                              <span key={pidx} className="rel-prop">
-                                {key}: <strong>{value}</strong>
-                              </span>
-                            ))}
-                          </div>
-                        )} */}
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Graph Database Updates with Animation */}
+              {/* Graph Database Updates */}
               {graphChanges && (
-                <GraphVisualization graphData={graphChanges} />
-              )}
-
-              {/* Email Summary */}
-              {results.summary && (
-                <div className="results-card summary-card-mvp">
-                  <h3 className="results-title">Case Update Summary</h3>
-                  <div className="outlook-email-result">
-                    <div className="email-header-line">
-                      <span className="header-label">From:</span>
-                      <span className="header-value">Attorney Intelligence System</span>
-                    </div>
-                    <div className="email-header-line">
-                      <span className="header-label">To:</span>
-                      <span className="header-value">Legal Team</span>
-                    </div>
-                    <div className="email-header-line">
-                      <span className="header-label">Subject:</span>
-                      <span className="header-value">Case Update - SSG Michael A. Reynolds (Case 24-MJ-117)</span>
-                    </div>
-                    <div className="email-divider"></div>
-                    <div className="email-body-result">
-                      <p>{results.summary}</p>
-                    </div>
-                  </div>
+                <div ref={graphRef}>
+                  <GraphVisualization graphData={graphChanges} />
                 </div>
               )}
+
+              {/* Email Summary with Typing Effect */}
+              {/* Email Summary with Typing Effect */}
+{results.summaryText && (
+  <div ref={summaryRef} className="results-card summary-card-mvp">
+    <h3 className="results-title">Case Update Summary</h3>
+    <div className="outlook-email-result">
+      <div className="email-header-line">
+        <span className="header-label">From:</span>
+        <span className="header-value">Attorney Intelligence System</span>
+      </div>
+      <div className="email-header-line">
+        <span className="header-label">To:</span>
+        <span className="header-value">Legal Team</span>
+      </div>
+      <div className="email-header-line">
+        <span className="header-label">Subject:</span>
+        <span className="header-value">
+          Case Update - SSG Michael A. Reynolds (Case 24-MJ-117)
+        </span>
+      </div>
+      <div className="email-divider"></div>
+      <div className="email-body-result" style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
+        {singleEmailTypedSummary.split('\n').map((line, index) => {
+          if (line.includes('United States v. Reynolds')) {
+            return (
+              <div key={index} className="email-line-header">
+                <strong>{line}</strong>
+              </div>
+            );
+          } else if (line.includes('Action Items:')) {
+            return (
+              <div key={index} className="email-line-header">
+                <strong>{line}</strong>
+              </div>
+            );
+          } else {
+            return <div key={index}>{line}</div>;
+          }
+        })}
+        {singleEmailSummaryTyping && <span className="typing-cursor">|</span>}
+      </div>
+    </div>
+  </div>
+)}
+
             </div>
           )}
         </div>
       </main>
+
+      <style jsx>{`
+        .fixed-progress-bar {
+          position: fixed;
+          top: 80px;
+          left: 0;
+          right: 0;
+          z-index: 1000;
+          background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.95) 100%);
+          backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+          padding: 1.5rem 2rem;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .typing-cursor {
+          animation: blink 1s step-end infinite;
+          color: #3b82f6;
+          font-weight: bold;
+        }
+
+        @keyframes blink {
+          0%, 50% { opacity: 1; }
+          51%, 100% { opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }
 
-// Graph Visualization Component
 function GraphVisualization({ graphData }) {
-  const [animationComplete, setAnimationComplete] = useState(false);
-  const [highlightedNodes, setHighlightedNodes] = useState(new Set());
-  const [highlightedEdges, setHighlightedEdges] = useState(new Set());
+  const containerRef = useRef(null);
+  const simulationRef = useRef(null);
 
+  const [nodes, setNodes] = useState([]);
+  const [links, setLinks] = useState([]);
+  const [hoverNode, setHoverNode] = useState(null);
+  const [dimensions, setDimensions] = useState({ width: 1100, height: 620 });
+
+  const NODE_RADIUS = 30;
+  const MARGIN = 50; // prevent clipping at edges
+
+  /* ---------- theme ---------- */
+  const theme = {
+    shellGradient: "linear-gradient(180deg, #0b1220 0%, #0f1b2d 100%)",
+    border: "#1e293b",
+    nodeFill: "#0b1220",
+    nodeStroke: "#334155",
+    nodeHalo: "rgba(56, 189, 248, 0.12)",
+    edge: "#475569",
+    edgeActive: "#38bdf8",
+    text: "#e5e7eb",
+    subtext: "#94a3b8",
+    edgeLabel: "#cbd5f5"
+  };
+
+  const entityAccent = {
+    PERSON: "#38bdf8",
+    LOCATION: "#34d399",
+    DATE: "#a78bfa",
+    CASE: "#f87171",
+    COURT: "#fb7185",
+    JUDGE: "#60a5fa",
+    MOTION: "#facc15",
+    PARTY_ENTITY: "#2dd4bf",
+    STATUTE: "#fb923c",
+    LEGAL_ISSUE: "#c084fc",
+    PRECEDENT: "#4ade80",
+    CONTRACT: "#818cf8",
+    CLAUSE: "#9ca3af",
+    EVIDENCE: "#38bdf8"
+  };
+
+  /* ---------- resize ---------- */
   useEffect(() => {
-    const timer = setTimeout(() => setAnimationComplete(true), 2000);
-    
-    // Highlight animation sequence
-    graphData.nodes_added.forEach((node, idx) => {
-      setTimeout(() => {
-        setHighlightedNodes(prev => new Set([...prev, node.id]));
-      }, idx * 200);
-    });
-
-    graphData.relationships.forEach((rel, idx) => {
-      setTimeout(() => {
-        setHighlightedEdges(prev => new Set([...prev, idx]));
-      }, (graphData.nodes_added.length * 200) + (idx * 150));
-    });
-
-    return () => clearTimeout(timer);
-  }, [graphData]);
-
-  const entityColorMap = {
-    'PERSON': { primary: '#3b82f6', secondary: '#1e40af', glow: '#60a5fa' },
-    'LOCATION': { primary: '#10b981', secondary: '#047857', glow: '#34d399' },
-    'DATE': { primary: '#8b5cf6', secondary: '#6d28d9', glow: '#a78bfa' },
-    'CASE': { primary: '#ef4444', secondary: '#b91c1c', glow: '#f87171' },
-    'COURT': { primary: '#ec4899', secondary: '#be185d', glow: '#f472b6' },
-    'JUDGE': { primary: '#06b6d4', secondary: '#0e7490', glow: '#22d3ee' },
-    'MOTION': { primary: '#f59e0b', secondary: '#d97706', glow: '#fbbf24' },
-    'HEARING': { primary: '#f43f5e', secondary: '#be123c', glow: '#fb7185' },
-    'PARTY_ENTITY': { primary: '#14b8a6', secondary: '#0f766e', glow: '#2dd4bf' },
-    'STATUTE': { primary: '#f97316', secondary: '#c2410c', glow: '#fb923c' },
-    'LEGAL_ISSUE': { primary: '#a855f7', secondary: '#7e22ce', glow: '#c084fc' },
-    'PRECEDENT': { primary: '#84cc16', secondary: '#65a30d', glow: '#a3e635' },
-    'CONTRACT': { primary: '#6366f1', secondary: '#4338ca', glow: '#818cf8' },
-    'CLAUSE': { primary: '#78716c', secondary: '#57534e', glow: '#a8a29e' },
-    'EVIDENCE': { primary: '#0ea5e9', secondary: '#0369a1', glow: '#38bdf8' }
-  };
-
-  // Calculate node positions with organic spacing
-  const getNodePosition = (idx, total) => {
-    const cols = Math.min(5, Math.ceil(Math.sqrt(total * 1.5)));
-    const nodeSpacingX = 200;
-    const nodeSpacingY = 180;
-    const startX = 150;
-    const startY = 140;
-    
-    const col = idx % cols;
-    const row = Math.floor(idx / cols);
-    
-    // Add slight organic offset
-    const organicOffsetX = (Math.sin(idx * 0.5) * 15);
-    const organicOffsetY = (Math.cos(idx * 0.7) * 15);
-    
-    return {
-      x: startX + col * nodeSpacingX + organicOffsetX,
-      y: startY + row * nodeSpacingY + organicOffsetY
+    const resize = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      setDimensions({
+        width: rect.width,
+        height: rect.height
+      });
     };
-  };
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  /* ---------- build graph ---------- */
+  useEffect(() => {
+    if (!graphData) return;
+
+    const nodeMap = new Map();
+
+    graphData.nodes_added.forEach((n, i) => {
+      // position nodes roughly in a circle with margin
+      const angle = (i / graphData.nodes_added.length) * 2 * Math.PI;
+      nodeMap.set(n.label, {
+        id: n.label,
+        label: n.label,
+        type: n.type,
+        x: MARGIN + Math.cos(angle) * (dimensions.width / 2 - MARGIN),
+        y: MARGIN + Math.sin(angle) * (dimensions.height / 2 - MARGIN)
+      });
+    });
+
+    const builtLinks = graphData.relationships
+      .map(r => {
+        const source = nodeMap.get(r.from);
+        const target = nodeMap.get(r.to);
+        if (!source || !target) return null;
+        return {
+          source,
+          target,
+          label: r.type || "RELATED_TO"
+        };
+      })
+      .filter(Boolean);
+
+    setNodes([...nodeMap.values()]);
+    setLinks(builtLinks);
+  }, [graphData, dimensions]);
+
+  /* ---------- force simulation ---------- */
+  useEffect(() => {
+    if (!nodes.length) return;
+
+    simulationRef.current?.stop();
+
+    simulationRef.current = d3
+      .forceSimulation(nodes)
+      .force(
+        "link",
+        d3
+          .forceLink(links)
+          .id(d => d.id)
+          .distance(160)
+          .strength(0.9)
+      )
+      .force("charge", d3.forceManyBody().strength(-420))
+      .force(
+        "center",
+        d3.forceCenter(dimensions.width / 2, dimensions.height / 2)
+      )
+      .force("collision", d3.forceCollide().radius(NODE_RADIUS + 22))
+      .force("xBound", d3.forceX(dimensions.width / 2).strength(0.1))
+      .force("yBound", d3.forceY(dimensions.height / 2).strength(0.1))
+      .alpha(1)
+      .restart();
+
+    simulationRef.current.on("tick", () => {
+      // clamp nodes inside viewport
+      setNodes(nodes.map(n => ({
+        ...n,
+        x: Math.max(MARGIN, Math.min(dimensions.width - MARGIN, n.x)),
+        y: Math.max(MARGIN, Math.min(dimensions.height - MARGIN, n.y))
+      })));
+    });
+
+    return () => simulationRef.current?.stop();
+  }, [nodes.length, links.length, dimensions]);
 
   return (
-    <div className="results-card graph-updates-card">
-      <h3 className="results-title-graph">
-        <Network size={22} style={{ marginRight: '10px' }} />
-        Knowledge Graph Updates
-      </h3>
-      <div className="graph-updates-content">
-        
-        {/* Graph Visualization */}
-        <div className="graph-visualization-container">
-          <svg className="graph-svg" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              {/* Advanced gradient definitions */}
-              <radialGradient id="nodeGradient" cx="30%" cy="30%">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.3)" />
-                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-              </radialGradient>
-              
-              {/* Glow filters */}
-              <filter id="softGlow" x="-150%" y="-150%" width="400%" height="400%">
-                <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
-                <feComposite in="coloredBlur" in2="SourceAlpha" operator="in" result="softGlow"/>
-                <feMerge>
-                  <feMergeNode in="softGlow"/>
-                  <feMergeNode in="softGlow"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-              
-              <filter id="highlightGlow" x="-200%" y="-200%" width="500%" height="500%">
-                <feGaussianBlur stdDeviation="15" result="coloredBlur"/>
-                <feComposite in="coloredBlur" in2="SourceAlpha" operator="in" result="softGlow"/>
-                <feMerge>
-                  <feMergeNode in="softGlow"/>
-                  <feMergeNode in="softGlow"/>
-                  <feMergeNode in="softGlow"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-              
-              <filter id="edgeGlow" x="-200%" y="-200%" width="500%" height="500%">
-                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
+    <div ref={containerRef} className="graph-shell">
+      <header className="graph-header">
+        <h2>Knowledge Graph Updates</h2>
+        <span>{nodes.length} entities • {links.length} relationships</span>
+      </header>
 
-              {/* Drop shadow for depth */}
-              <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                <feOffset dx="0" dy="2" result="offsetblur"/>
-                <feComponentTransfer>
-                  <feFuncA type="linear" slope="0.5"/>
-                </feComponentTransfer>
-                <feMerge>
-                  <feMergeNode/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
+      <svg className="graph-svg" width={dimensions.width} height={dimensions.height} viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}>
+        {/* ----- edges ----- */}
+        <g>
+          {links.map((l, i) => {
+            const active =
+              hoverNode &&
+              (l.source.id === hoverNode || l.target.id === hoverNode);
 
-              {/* Animated pulse for highlighted nodes */}
-              <radialGradient id="pulseGradient">
-                <stop offset="0%" stopColor="rgba(96, 165, 250, 0.8)">
-                  <animate attributeName="stop-opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
-                </stop>
-                <stop offset="100%" stopColor="rgba(96, 165, 250, 0)">
-                  <animate attributeName="stop-opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
-                </stop>
-              </radialGradient>
-            </defs>
-            
-            {/* Background grid pattern for depth */}
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(100, 116, 139, 0.1)" strokeWidth="0.5"/>
-            </pattern>
-            <rect width="100%" height="100%" fill="url(#grid)" opacity="0.3"/>
-            
-            {/* Relationships (edges) */}
-            <g className="edges-layer">
-              {graphData.relationships.map((rel, idx) => {
-                const fromNode = graphData.nodes_added.find(n => 
-                  n.label.toLowerCase().includes(rel.from.toLowerCase().split(' ')[0]) || 
-                  rel.from.toLowerCase().includes(n.label.toLowerCase().split(' ')[0])
-                );
-                const toNode = graphData.nodes_added.find(n => 
-                  n.label.toLowerCase().includes(rel.to.toLowerCase().split(' ')[0]) || 
-                  rel.to.toLowerCase().includes(n.label.toLowerCase().split(' ')[0])
-                );
-                
-                if (!fromNode || !toNode) return null;
-                
-                const fromIdx = graphData.nodes_added.indexOf(fromNode);
-                const toIdx = graphData.nodes_added.indexOf(toNode);
-                
-                const fromPos = getNodePosition(fromIdx, graphData.nodes_added.length);
-                const toPos = getNodePosition(toIdx, graphData.nodes_added.length);
-                
-                const isHighlighted = highlightedEdges.has(idx);
-                
-                // Calculate control points for curved edges
-                const dx = toPos.x - fromPos.x;
-                const dy = toPos.y - fromPos.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const curvature = Math.min(distance * 0.2, 50);
-                
-                const midX = (fromPos.x + toPos.x) / 2;
-                const midY = (fromPos.y + toPos.y) / 2;
-                
-                // Perpendicular offset for curve
-                const offsetX = -dy / distance * curvature;
-                const offsetY = dx / distance * curvature;
-                
-                const controlX = midX + offsetX;
-                const controlY = midY + offsetY;
-                
-                // Calculate label position on curve
-                const t = 0.5;
-                const labelX = (1-t)*(1-t)*fromPos.x + 2*(1-t)*t*controlX + t*t*toPos.x;
-                const labelY = (1-t)*(1-t)*fromPos.y + 2*(1-t)*t*controlY + t*t*toPos.y;
-                
-                // Calculate proper text width
-                const relationText = rel.relation.toUpperCase();
-                const textWidth = Math.max(relationText.length * 7, 60);
-                
-                return (
-                  <g key={`edge-${idx}`}>
-                    {/* Curved edge path */}
-                    <path
-                      d={`M ${fromPos.x} ${fromPos.y} Q ${controlX} ${controlY} ${toPos.x} ${toPos.y}`}
-                      stroke={isHighlighted ? "#60a5fa" : "#475569"}
-                      strokeWidth={isHighlighted ? "2.5" : "1.5"}
-                      fill="none"
-                      opacity={isHighlighted ? "0.95" : "0.35"}
-                      className="graph-edge"
-                      filter={isHighlighted ? "url(#edgeGlow)" : "none"}
-                      strokeDasharray={isHighlighted ? "none" : "5,5"}
-                      style={{
-                        animation: `edgeDraw 0.8s ease-out ${idx * 0.12}s forwards`,
-                        strokeDashoffset: distance * 2
-                      }}
-                    />
-                    
-                    {/* Direction arrow */}
-                    {isHighlighted && (
-                      <polygon
-                        points="0,-4 8,0 0,4"
-                        fill="#60a5fa"
-                        opacity="0.8"
-                        transform={`translate(${toPos.x - dx/distance * 45}, ${toPos.y - dy/distance * 45}) rotate(${Math.atan2(dy, dx) * 180 / Math.PI})`}
-                        style={{
-                          animation: `fadeIn 0.4s ease-in ${idx * 0.15 + 0.5}s forwards`,
-                          opacity: 0
-                        }}
-                      />
-                    )}
-                    
-                    {/* Edge label */}
-                    {animationComplete && (
-                      <g 
-                        opacity="0" 
-                        style={{ 
-                          animation: `fadeIn 0.5s ease-in-out ${idx * 0.15 + 0.4}s forwards` 
-                        }}
-                      >
-                        <rect
-                          x={labelX - textWidth/2}
-                          y={labelY - 11}
-                          width={textWidth}
-                          height="22"
-                          fill="#0f172a"
-                          opacity="0.95"
-                          rx="6"
-                          stroke={isHighlighted ? "#60a5fa" : "#334155"}
-                          strokeWidth="1.5"
-                          filter="url(#dropShadow)"
-                        />
-                        <text
-                          x={labelX}
-                          y={labelY + 1}
-                          fontSize="10"
-                          fill={isHighlighted ? "#93c5fd" : "#94a3b8"}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fontWeight={isHighlighted ? "700" : "600"}
-                          letterSpacing="0.3"
-                        >
-                          {relationText}
-                        </text>
-                      </g>
-                    )}
-                  </g>
-                );
-              })}
-            </g>
-            
-            {/* Nodes */}
-            <g className="nodes-layer">
-              {graphData.nodes_added.map((node, idx) => {
-                const pos = getNodePosition(idx, graphData.nodes_added.length);
-                const colors = entityColorMap[node.type] || entityColorMap['PERSON'];
-                const isHighlighted = highlightedNodes.has(node.id);
-                
-                return (
-                  <g key={node.id} className="graph-node">
-                    {/* Outer pulse ring for highlighted nodes */}
-                    {isHighlighted && (
-                      <>
-                        <circle
-                          cx={pos.x}
-                          cy={pos.y}
-                          r="0"
-                          fill="url(#pulseGradient)"
-                          opacity="0.6"
-                          style={{
-                            animation: `pulseRing 2s ease-out ${idx * 0.1}s infinite`
-                          }}
-                        />
-                        <circle
-                          cx={pos.x}
-                          cy={pos.y}
-                          r="45"
-                          fill="none"
-                          stroke={colors.glow}
-                          strokeWidth="2"
-                          opacity="0"
-                          style={{
-                            animation: `rippleOut 2s ease-out ${idx * 0.1}s forwards`
-                          }}
-                        />
-                      </>
-                    )}
-                    
-                    {/* Node shadow circle */}
-                    <circle
-                      cx={pos.x}
-                      cy={pos.y + 4}
-                      r="0"
-                      fill="rgba(0, 0, 0, 0.3)"
-                      filter="url(#softGlow)"
-                      style={{
-                        animation: `nodeAppear 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${idx * 0.08}s forwards`
-                      }}
-                    />
-                    
-                    {/* Main node outer ring */}
-                    <circle
-                      cx={pos.x}
-                      cy={pos.y}
-                      r="0"
-                      fill="none"
-                      stroke={colors.primary}
-                      strokeWidth="3"
-                      opacity="0.4"
-                      style={{
-                        animation: `nodeAppear 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${idx * 0.08}s forwards`
-                      }}
-                    />
-                    
-                    {/* Main node circle with gradient */}
-                    <circle
-                      cx={pos.x}
-                      cy={pos.y}
-                      r="0"
-                      fill={colors.primary}
-                      filter={isHighlighted ? "url(#highlightGlow)" : "url(#softGlow)"}
-                      style={{
-                        animation: `nodeAppear 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${idx * 0.08}s forwards`
-                      }}
-                    />
-                    
-                    {/* Inner gradient overlay */}
-                    <circle
-                      cx={pos.x}
-                      cy={pos.y}
-                      r="0"
-                      fill="url(#nodeGradient)"
-                      style={{
-                        animation: `nodeAppear 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${idx * 0.08 + 0.1}s forwards`
-                      }}
-                    />
-                    
-                    {/* Node label */}
-                    <text
-                      x={pos.x}
-                      y={pos.y + 1}
-                      fontSize="13"
-                      fontWeight="800"
-                      fill="white"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      opacity="0"
-                      letterSpacing="-0.3"
-                      style={{
-                        animation: `fadeIn 0.5s ease-out ${idx * 0.08 + 0.35}s forwards`,
-                        filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.7))'
-                      }}
-                    >
-                      {node.label.length > 11 ? node.label.substring(0, 9) + '…' : node.label}
-                    </text>
-                    
-                    {/* Type badge below node */}
-                    <g opacity="0" style={{ animation: `fadeIn 0.5s ease-out ${idx * 0.08 + 0.45}s forwards` }}>
-                      <rect
-                        x={pos.x - 35}
-                        y={pos.y + 50}
-                        width="70"
-                        height="20"
-                        fill={colors.secondary}
-                        opacity="0.85"
-                        rx="10"
-                        filter="url(#dropShadow)"
-                      />
-                      <text
-                        x={pos.x}
-                        y={pos.y + 60}
-                        fontSize="9"
-                        fontWeight="700"
-                        fill="#e2e8f0"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        letterSpacing="0.5"
-                      >
-                        {node.type}
-                      </text>
-                    </g>
-                  </g>
-                );
-              })}
-            </g>
-          </svg>
-        </div>
-      </div>
+            return (
+              <g key={i}>
+                <line
+                  x1={l.source.x}
+                  y1={l.source.y}
+                  x2={l.target.x}
+                  y2={l.target.y}
+                  className={`edge ${active ? "active" : ""}`}
+                />
+                <text
+                  x={(l.source.x + l.target.x) / 2}
+                  y={(l.source.y + l.target.y) / 2 - 4}
+                  className="edge-label"
+                >
+                  {l.label}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+
+        {/* ----- nodes ----- */}
+        <g>
+          {nodes.map(n => {
+            const accent = entityAccent[n.type] || theme.nodeStroke;
+            const hovered = hoverNode === n.id;
+
+            return (
+              <g
+                key={n.id}
+                transform={`translate(${n.x}, ${n.y})`}
+                onMouseEnter={() => setHoverNode(n.id)}
+                onMouseLeave={() => setHoverNode(null)}
+                className={`node ${hovered ? "hovered" : ""}`}
+              >
+                <circle className="halo" r={NODE_RADIUS + 8} />
+                <circle className="core" r={NODE_RADIUS} stroke={accent} />
+
+                <text y={NODE_RADIUS + 12} textAnchor="middle">
+                  {n.label.length > 16 ? n.label.slice(0, 14) + "…" : n.label}
+                </text>
+                <text y={NODE_RADIUS + 26} textAnchor="middle" className="sub">
+                  {n.type}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      </svg>
 
       <style jsx>{`
-        @keyframes nodeAppear {
-          0% {
-            r: 0;
-            opacity: 0;
-          }
-          60% {
-            r: 42;
-            opacity: 1;
-          }
-          100% {
-            r: 38;
-            opacity: 1;
-          }
-        }
-
-        @keyframes pulseRing {
-          0% {
-            r: 40;
-            opacity: 0.6;
-          }
-          100% {
-            r: 90;
-            opacity: 0;
-          }
-        }
-
-        @keyframes rippleOut {
-          0% {
-            r: 45;
-            opacity: 0.8;
-            stroke-width: 2;
-          }
-          100% {
-            r: 100;
-            opacity: 0;
-            stroke-width: 0.5;
-          }
-        }
-
-        @keyframes edgeDraw {
-          from {
-            strokeDashoffset: 2000;
-            opacity: 0;
-          }
-          to {
-            strokeDashoffset: 0;
-            opacity: 1;
-          }
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        .results-card {
-          background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        .graph-shell {
+          height: clamp(560px, 70vh, 720px);
+          background: ${theme.shellGradient};
           border-radius: 24px;
-          padding: 2.5rem;
-          border: 1px solid #334155;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(148, 163, 184, 0.1) inset;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .results-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3), transparent);
-        }
-
-        .results-title-graph {
-          font-size: 1.4rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          margin: 0 0 2rem 0;
+          border: 2px solid #6366f133;
           display: flex;
-          align-items: center;
-          letter-spacing: -0.03em;
+          flex-direction: column;
+          overflow: hidden;
+          // margin-top: 2rem;
+          box-shadow: 0 20px 60px rgba(15, 23, 42, 0.6);
+                background: linear-gradient(135deg, #8b5cf60d 0%, #7c3aed0d 100%);
+    border: 2px solid #8b5cf64d;
+      box-shadow:
+            inset 0 0 0 1px rgba(255,255,255,0.03),
+            0 40px 90px rgba(0,0,0,0.65);
         }
 
-        .graph-visualization-container {
+        .graph-header {
+          padding: 1.6rem 2rem;
+          border-bottom: 1px solid ${theme.border};
+        }
+
+        .graph-header h2 {
           margin: 0;
-          background: radial-gradient(ellipse at top, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
-          border-radius: 20px;
-          padding: 3rem 2rem;
-          border: 1px solid rgba(71, 85, 105, 0.5);
-          box-shadow: 
-            0 12px 40px rgba(0, 0, 0, 0.5),
-            0 0 0 1px rgba(148, 163, 184, 0.05) inset;
-          position: relative;
-          overflow: visible;
+          color: ${theme.text};
         }
 
-        .graph-visualization-container::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
-          pointer-events: none;
-          border-radius: 20px;
+        .graph-header span {
+          color: ${theme.subtext};
+          font-size: 0.85rem;
         }
 
         .graph-svg {
-          width: 100%;
-          height: auto;
-          overflow: visible;
+          flex: 1;
+                    background: ${theme.shellGradient};
+
         }
 
+        .edge {
+          stroke: ${theme.edge};
+          stroke-width: 1.2;
+          opacity: 0.35;
+        }
 
-        .edges-layer {
+        .edge.active {
+          stroke: ${theme.edgeActive};
+          opacity: 0.9;
+          stroke-width: 2.2;
+        }
+
+        .edge-label {
+          fill: ${theme.edgeLabel};
+          font-size: 9px;
+          pointer-events: none;
+          opacity: 0.6;
+        }
+
+        .node {
+          cursor: pointer;
+        }
+
+        .node .halo {
+          fill: ${theme.nodeHalo};
+          opacity: 0;
+          transition: opacity 200ms ease;
+        }
+
+        .node .core {
+          fill: ${theme.nodeFill};
+          stroke-width: 2;
+          transition: all 200ms ease;
+        }
+
+        .node text {
+          fill: ${theme.text};
+          font-size: 11px;
+          font-weight: 600;
           pointer-events: none;
         }
 
-        .nodes-layer {
-          pointer-events: none;
+        .node text.sub {
+          fill: ${theme.subtext};
+          font-size: 9px;
         }
 
-        .graph-node {
-          pointer-events: none;
+        .node.hovered .halo {
+          opacity: 1;
         }
 
-        .graph-edge {
-          transition: none;
+        .node.hovered .core {
+          r: ${NODE_RADIUS + 4}px;
+          stroke-width: 3;
         }
       `}</style>
     </div>
