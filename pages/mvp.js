@@ -1153,22 +1153,23 @@ const handleProcessEmail = async () => {
     }
   ];
 
-  const graphChanges = {
-    nodes_added: [
-      { id: 'PERSON_REYNOLDS', label: 'SSG Michael A. Reynolds', type: 'PERSON' },
-      { id: 'CASE_24MJ117', label: 'Case No. 24-MJ-117', type: 'CASE' },
-      { id: 'PERSON_SMITH', label: 'John Smith', type: 'PERSON' },
-      { id: 'PERSON_BENNETT', label: 'SA Laura M. Bennett', type: 'PERSON' },
-      { id: 'LOC_FORT_LIBERTY', label: 'Fort Liberty, NC', type: 'LOCATION' },
-      { id: 'LOC_SMOKE_BOMB', label: 'Smoke Bomb Hill', type: 'LOCATION' },
-      { id: 'STATUTE_ART92', label: 'Article 92, UCMJ', type: 'STATUTE' },
-      { id: 'HEARING_ART32', label: 'Article 32 Hearing', type: 'HEARING' }
-    ],
-    relationships: relationships,
-    relationships_added: relationships.length,
-    properties_updated: 23,
-    existing_nodes_updated: 0
-  };
+const graphChanges = {
+  nodes_added: [
+    { id: 'PERSON_REYNOLDS', label: 'Staff Sergeant Michael A. Reynolds', type: 'PERSON' },
+    { id: 'CASE_24MJ117', label: 'Case No. 24-MJ-117', type: 'CASE' },
+    { id: 'PERSON_SMITH', label: 'John Smith', type: 'PERSON' },
+    { id: 'PERSON_BENNETT', label: 'CID Special Agent Laura M. Bennett', type: 'PERSON' },
+    { id: 'LOC_FORT_LIBERTY', label: 'Fort Liberty Military Justice Court', type: 'LOCATION' },
+    { id: 'LOC_SMOKE_BOMB', label: 'Smoke Bomb Hill Training Area', type: 'LOCATION' },
+    { id: 'STATUTE_ART92', label: 'Article 92, UCMJ', type: 'STATUTE' },
+    { id: 'HEARING_ART32', label: 'Article 32 preliminary hearing', type: 'HEARING' },
+    { id: 'UNIT_82ABN', label: '82nd Airborne Division, 1st Brigade Combat Team', type: 'PARTY_ENTITY' },
+  ],
+  relationships: relationships,
+  relationships_added: relationships.length,
+  properties_updated: 23,
+  existing_nodes_updated: 0
+};
 
   setGraphChanges(graphChanges);
   setGraphAnimation({ nodes: graphChanges.nodes_added, relationships: relationships });
@@ -1847,7 +1848,7 @@ const handleBatchProcess = async () => {
                 )}
 
                 {/* Batch Graph Changes */}
-                {batchGraphChanges && !showBatchSummary && (
+                {batchGraphChanges && (
                   <div className="graph-changes-section">
                     <div className="graph-changes-header">
                       <Network size={24} />
@@ -2094,11 +2095,11 @@ const handleBatchProcess = async () => {
               )}
 
               {/* Graph Database Updates */}
-              {graphChanges && (
-                <div ref={graphRef}>
+             <div ref={graphRef}>
+                {graphChanges && (
                   <GraphVisualization graphData={graphChanges} />
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Email Summary with Typing Effect */}
               {/* Email Summary with Typing Effect */}
@@ -2238,39 +2239,68 @@ function GraphVisualization({ graphData }) {
   }, []);
 
   /* ---------- build graph ---------- */
-  useEffect(() => {
-    if (!graphData) return;
+useEffect(() => {
+  if (!graphData) return;
 
-    const nodeMap = new Map();
+  const nodeMap = new Map(); // keyed by canonical id only
 
-    graphData.nodes_added.forEach((n, i) => {
-      // position nodes roughly in a circle with margin
-      const angle = (i / graphData.nodes_added.length) * 2 * Math.PI;
-      nodeMap.set(n.label, {
-        id: n.label,
-        label: n.label,
-        type: n.type,
-        x: MARGIN + Math.cos(angle) * (dimensions.width / 2 - MARGIN),
-        y: MARGIN + Math.sin(angle) * (dimensions.height / 2 - MARGIN)
-      });
+  graphData.nodes_added.forEach((n, i) => {
+    const angle = (i / graphData.nodes_added.length) * 2 * Math.PI;
+    const nodeObj = {
+      id: n.id || n.label,
+      label: n.label,
+      type: n.type,
+      x: dimensions.width / 2 + Math.cos(angle) * 200,
+      y: dimensions.height / 2 + Math.sin(angle) * 200
+    };
+    nodeMap.set(nodeObj.id, nodeObj);
+  });
+
+  // Build a separate lookup by label for relationship resolution
+  const labelMap = new Map();
+  nodeMap.forEach(n => labelMap.set(n.label.toLowerCase(), n));
+
+  const findNode = (key) => {
+    if (!key) return null;
+    // 1. exact id match
+    if (nodeMap.has(key)) return nodeMap.get(key);
+    // 2. exact label match (case-insensitive)
+    if (labelMap.has(key.toLowerCase())) return labelMap.get(key.toLowerCase());
+    // 3. label contains key OR key contains label — pick longest match to avoid false positives
+    let best = null;
+    let bestLen = 0;
+    nodeMap.forEach(n => {
+      const nl = n.label.toLowerCase();
+      const kl = key.toLowerCase();
+      if ((nl.includes(kl) || kl.includes(nl)) && nl.length > bestLen) {
+        best = n;
+        bestLen = nl.length;
+      }
     });
+    return best;
+  };
 
-    const builtLinks = graphData.relationships
-      .map(r => {
-        const source = nodeMap.get(r.from);
-        const target = nodeMap.get(r.to);
-        if (!source || !target) return null;
-        return {
-          source,
-          target,
-          label: r.type || "RELATED_TO"
-        };
-      })
-      .filter(Boolean);
+  const builtLinks = graphData.relationships
+    .map(r => {
+      const source = findNode(r.from);
+      const target = findNode(r.to);
+      if (!source || !target || source.id === target.id) return null;
+      return { source, target, label: r.relation || r.type || "RELATED_TO" };
+    })
+    .filter(Boolean);
 
-    setNodes([...nodeMap.values()]);
-    setLinks(builtLinks);
-  }, [graphData, dimensions]);
+  // Deduplicate links (same source+target pair)
+  const seen = new Set();
+  const dedupedLinks = builtLinks.filter(l => {
+    const key = `${l.source.id}__${l.target.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  setNodes([...nodeMap.values()]);
+  setLinks(dedupedLinks);
+}, [graphData, dimensions]);
 
   /* ---------- force simulation ---------- */
   useEffect(() => {
@@ -2300,13 +2330,13 @@ function GraphVisualization({ graphData }) {
       .restart();
 
     simulationRef.current.on("tick", () => {
-      // clamp nodes inside viewport
-      setNodes(nodes.map(n => ({
-        ...n,
-        x: Math.max(MARGIN, Math.min(dimensions.width - MARGIN, n.x)),
-        y: Math.max(MARGIN, Math.min(dimensions.height - MARGIN, n.y))
-      })));
-    });
+  nodes.forEach(n => {
+    n.x = Math.max(MARGIN, Math.min(dimensions.width - MARGIN, n.x));
+    n.y = Math.max(MARGIN, Math.min(dimensions.height - MARGIN, n.y));
+  });
+  setNodes([...nodes]);
+  setLinks([...links]);
+});
 
     return () => simulationRef.current?.stop();
   }, [nodes.length, links.length, dimensions]);
