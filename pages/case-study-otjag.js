@@ -971,7 +971,7 @@ export default function CaseStudyOTJAG() {
             <div className="cta-actions">
               <a href="/live-demo" className="btn-primary">Try the live pipeline →</a>
               <a href="mailto:hello@deltalima.com" className="btn-ghost">Start a conversation</a>
-              <a href="/" className="btn-ghost">Back to Delta Lima</a>
+              {/* <a href="/" className="btn-ghost">Back to Delta Lima</a> */}
             </div>
           </div>
         </div>
