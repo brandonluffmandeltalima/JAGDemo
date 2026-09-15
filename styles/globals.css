@@ -1,16 +1,15 @@
-
-* {
+/* * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
 a {
-  all: unset;           /* Resets almost everything */
-  display: inline;      /* Make sure it behaves like normal text link */
-  cursor: pointer;      /* Optional: show pointer on hover */
-  text-decoration: none; /* Remove underline */
-  color: inherit;        /* Inherit text color from parent */
+  all: unset;           
+  display: inline;      
+  cursor: pointer;    
+  text-decoration: none;
+  color: inherit;       
 }
 
 body {
@@ -75,4 +74,4 @@ input[type="radio"] {
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
-}
+} */
