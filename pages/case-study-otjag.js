@@ -352,7 +352,7 @@ export default function CaseStudyOTJAG() {
           </a>
           <nav className="links">
             <a href="/#framework">Framework</a>
-            <a href="/case-studies/otjag">OTJAG</a>
+            <a href="/case-study-otjag">OTJAG</a>
             <a href="/#roi">Why it works</a>
             <a href="/live-demo" className="nav-cta">Demo</a>
           </nav>
@@ -986,7 +986,7 @@ export default function CaseStudyOTJAG() {
           </a>
           <div className="footer-links">
             <a href="/#framework">Framework</a>
-            <a href="/case-studies/otjag">OTJAG</a>
+            <a href="/case-study-otjag">OTJAG</a>
             <a href="/#contact">Contact</a>
           </div>
           <span className="fine">© 2026 Delta Lima. Decision-Centered Design.</span>

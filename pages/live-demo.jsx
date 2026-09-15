@@ -280,10 +280,10 @@ export default function LiveDemoPage() {
             <span className="logo-word">Delta Lima</span>
           </a>
           <nav className="links">
-            <a href="/case-studies/otjag#framework">Framework</a>
-            <a href="/case-studies/otjag#otjag">OTJAG</a>
-            <a href="/case-studies/otjag#roi">Why it works</a>
-            <a href="/case-studies/otjag#contact" className="nav-cta">Talk to us</a>
+            <a href="/#framework">Framework</a>
+            <a href="/case-study-otjag">OTJAG</a>
+            <a href="/#roi">Why it works</a>
+            <a href="/live-demo" className="nav-cta">Demo</a>
           </nav>
         </div>
       </header>
@@ -319,6 +319,8 @@ export default function LiveDemoPage() {
               </div>
             </div>
           )}
+
+          <a href="/case-study-otjag" className="back-to-case-study-btn">← Back to the OTJAG case study</a>
 
           <div className="mvp-header">
             <div className="mvp-icon-wrap">
@@ -804,9 +806,9 @@ useEffect(() => {
 
   return (
     <div ref={containerRef} className="graph-shell">
-      <header className="graph-header">
+      {/* <header className="graph-header">
         <h2>Knowledge Graph</h2>
-      </header>
+      </header> */}
       <svg className="graph-svg" width={dimensions.width} height={dimensions.height} viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}>
         {/* ----- edges ----- */}
         <g>

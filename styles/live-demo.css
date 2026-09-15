@@ -28,6 +28,14 @@
 .main-content{ padding: 150px 28px 100px; }
 .mvp-container{ max-width: 1100px; margin: 0 auto; }
 
+.back-to-case-study-btn{
+  display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px; padding: 10px 18px;
+  font-family: var(--font-body, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif); font-size: 13px; font-weight: 600;
+  color: var(--text, #F2F3F5); background: var(--bg-panel-2, #12151B); border: 1px solid var(--border-strong, #333944);
+  border-radius: 10px; transition: border-color .2s ease, background .2s ease, transform .15s ease;
+}
+.back-to-case-study-btn:hover{ border-color: var(--teal, #54D6CA); background: var(--teal-dim, rgba(84,214,202,0.16)); transform: translateX(-2px); }
+
 .mvp-header{ display: flex; align-items: center; gap: 18px; margin-bottom: 36px; flex-wrap: wrap; }
 .mvp-icon-wrap{
   width: 52px; height: 52px; border-radius: 15px; flex-shrink: 0;
