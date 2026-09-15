@@ -307,7 +307,7 @@ export default function CaseStudyOTJAG() {
           actObserver.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.3 });
+    }, { threshold: 0.05, rootMargin: '0px 0px -15% 0px' });
     actEls.forEach(el => actObserver.observe(el));
 
     return () => {
@@ -971,7 +971,6 @@ export default function CaseStudyOTJAG() {
             <div className="cta-actions">
               <a href="/live-demo" className="btn-primary">Try the live pipeline →</a>
               <a href="mailto:hello@deltalima.com" className="btn-ghost">Start a conversation</a>
-              {/* <a href="/" className="btn-ghost">Back to Delta Lima</a> */}
             </div>
           </div>
         </div>
